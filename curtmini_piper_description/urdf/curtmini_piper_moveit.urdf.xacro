@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="curtmini_piper">
-  <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_arm.xacro" />
+  <xacro:include filename="$(find agx_arm_urdf)/piper/urdf/piper_arm.xacro" />
 
   <xacro:arg name="simulation" default="False" />
   <xacro:arg name="arm_prefix" default="piper_" />
@@ -93,12 +93,18 @@
     <origin xyz="0.062 0 0.015" rpy="0 0 1.5707963267948966" />
   </joint>
 
-  <xacro:piper_arm
-    prefix="$(arg arm_prefix)"
-    parent="chassis"
-    mount_xyz="$(arg arm_mount_xyz)"
-    mount_rpy="$(arg arm_mount_rpy)"
-    tcp_offset_xyz="$(arg tcp_offset_xyz)"
-    tcp_offset_rpy="$(arg tcp_offset_rpy)"
-  />
+  <xacro:piper_arm prefix="$(arg arm_prefix)" />
+
+  <joint name="$(arg arm_prefix)mount_joint" type="fixed">
+    <parent link="chassis" />
+    <child link="$(arg arm_prefix)base_link" />
+    <origin xyz="$(arg arm_mount_xyz)" rpy="$(arg arm_mount_rpy)" />
+  </joint>
+
+  <link name="$(arg arm_prefix)tcp_link" />
+  <joint name="$(arg arm_prefix)tcp_joint" type="fixed">
+    <parent link="$(arg arm_prefix)link6" />
+    <child link="$(arg arm_prefix)tcp_link" />
+    <origin xyz="$(arg tcp_offset_xyz)" rpy="$(arg tcp_offset_rpy)" />
+  </joint>
 </robot>

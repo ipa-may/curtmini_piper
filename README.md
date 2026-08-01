@@ -11,9 +11,9 @@ This folder contains two ROS 2 packages:
 - `curtmini_piper_bringup`: Curt Mini hardware bringup, AGX Piper control,
   MoveIt, and RViz.
 
-The Piper meshes remain in `agx_arm_description`; the Curt Mini model and base
-controllers remain in `curt_mini`. The only copied robot source is the Piper
-kinematic description, adapted to support a prefix and a configurable mount.
+The prefix-aware Piper model and meshes come from `agx_arm_urdf`; the Curt Mini
+model and base controllers remain in `curt_mini`. This package owns only the
+mount and TCP joints that connect the two models.
 
 ## Workspace setup
 
@@ -70,13 +70,9 @@ vcs import --recursive --skip-existing src \
 
 These manifests provide:
 
+- The `agx_arm_ros` and `agx_arm_urdf` forks used by this integration.
 - `candle_ros2` v2.1.2, required by the Curt Mini hardware interface.
 - `openzen_driver`, required by the Curt Mini IMU launch.
-
-```sh
-cd src/agx_arm_ros
-git submodule update --init --recursive src/agx_arm_description/agx_arm_urdf
-```
 
 Install the Python SDK used by the Piper hardware node:
 
