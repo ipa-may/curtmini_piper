@@ -3,6 +3,7 @@
   <!-- Reuse the complete Curt Mini model, including its ros2_control block. -->
   <xacro:include filename="$(find curt_mini)/models/curt_mini/robot.urdf.xacro" />
   <xacro:include filename="$(find agx_arm_urdf)/piper/urdf/piper_arm.xacro" />
+  <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_ros2_control.xacro" />
 
   <xacro:arg name="arm_prefix" default="piper_" />
   <xacro:arg name="arm_mount_xyz" default="0 0 0.18" />
@@ -24,4 +25,14 @@
     <child link="$(arg arm_prefix)tcp_link" />
     <origin xyz="$(arg tcp_offset_xyz)" rpy="$(arg tcp_offset_rpy)" />
   </joint>
+
+  <xacro:if value="$(arg simulation)">
+    <xacro:piper_ros2_control
+      prefix="$(arg arm_prefix)"
+      system_name="GazeboSystem"
+      hardware_plugin="gz_ros2_control/GazeboSimSystem"
+      joint2_initial_value="0.1"
+      joint3_initial_value="-0.1"
+    />
+  </xacro:if>
 </robot>
