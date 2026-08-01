@@ -1,93 +1,164 @@
-# curtmini_piper
+# Curt Mini + Piper
 
+This folder contains two ROS 2 packages:
 
+- `curtmini_piper_description`: the existing Curt Mini model combined with a
+  Piper arm whose links and joints use the `piper_` prefix.
+- `curtmini_piper_bringup`: Curt Mini hardware bringup, AGX Piper control,
+  MoveIt, and RViz.
 
-## Getting started
+The Piper meshes remain in `agx_arm_description`; the Curt Mini model and base
+controllers remain in `curt_mini`. The only copied robot source is the Piper
+kinematic description, adapted to support a prefix and a configurable mount.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Workspace setup
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+The following instructions assume ROS 2 Jazzy and a workspace at
+`~/piper_tests2`.
 
-## Add your files
+Install the workspace tools and system dependencies:
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+```bash
+source /opt/ros/jazzy/setup.bash
 
+sudo apt update
+sudo apt install -y \
+  python3-colcon-common-extensions \
+  python3-vcstool \
+  python3-rosdep \
+  python3-can \
+  python3-scipy \
+  can-utils \
+  ethtool
 ```
-cd existing_repo
-git remote add origin https://gitlab.cc-asp.fraunhofer.de/ipa326/326-hardware/curtmini_piper.git
-git branch -M main
-git push -uf origin main
+
+The Python dependency installation below requires
+[`uv`](https://docs.astral.sh/uv/) to be available on `PATH`.
+
+Initialize rosdep once per machine, if it has not already been initialized:
+
+```bash
+sudo rosdep init
 ```
 
-## Integrate with your tools
+An `already initialized` message can be ignored. Update the rosdep database:
 
-* [Set up project integrations](https://gitlab.cc-asp.fraunhofer.de/ipa326/326-hardware/curtmini_piper/-/settings/integrations)
+```bash
+rosdep update
+```
 
-## Collaborate with your team
+Import the source dependencies pinned by the Curt Mini packages. The
+`--skip-existing` option makes these commands safe to repeat without replacing
+existing checkouts:
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```bash
+cd ~/piper_tests2
 
-## Test and Deploy
+vcs import --recursive --skip-existing src \
+  < src/curt_mini/ipa_ros2_control/ipa_ros2_control.repos
+vcs import --recursive --skip-existing src \
+  < src/curt_mini/curt_mini/curt_mini.repos
+```
 
-Use the built-in continuous integration in GitLab.
+These manifests provide:
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+- `candle_ros2` v2.1.2, required by the Curt Mini hardware interface.
+- `openzen_driver`, required by the Curt Mini IMU launch.
 
-***
+Install the Python SDK used by the Piper hardware node:
 
-# Editing this README
+Create a virtual environment
+```sh
+uv venv
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Install pyAxArm python requirements
+```bash
+uv pip install --user --break-system-packages \
+  "git+https://github.com/agilexrobotics/pyAgxArm.git"
+```
 
-## Suggestions for a good README
+Install the remaining declared ROS and system dependencies:
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```bash
+cd ~/piper_tests2
+rosdep install --from-paths src --ignore-src --rosdistro jazzy -r -y \
+  --skip-keys "warehouse_ros_mongo"
+```
 
-## Name
-Choose a self-explaining name for your project.
+`warehouse_ros_mongo` is declared by the upstream `agx_arm_moveit` package but
+has no rosdep definition for Ubuntu Noble. This bringup does not start the
+optional MongoDB warehouse backend.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## Build
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+From the workspace root:
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+```bash
+cd ~/piper_tests2
+source /opt/ros/jazzy/setup.bash
+colcon build --packages-up-to \
+  curtmini_piper_description curtmini_piper_bringup
+source install/setup.bash
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## Real robot
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+ros2 launch curtmini_piper_bringup bringup.launch.py
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+The defaults start the Curt Mini hardware, joystick, IMU, Piper on `can0`,
+MoveIt, and RViz. MoveIt uses prefixed names such as `piper_joint1`; a bridge
+translates these to the unprefixed names expected by `agx_arm_ctrl`.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+The AGX command interface starts gated off and is opened only while the
+trajectory action is active.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+MoveIt uses the original Curt Mini visual mesh and a simplified box collision
+for the chassis. The upstream 30 MB chassis STL remains in the full
+robot-state-publisher description, but is not used as an FCL collision mesh.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Hardware-free MoveIt/RViz
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```bash
+ros2 launch curtmini_piper_bringup bringup.launch.py \
+  start_base:=false start_arm_hardware:=false
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Mount calibration
 
-## License
-For open source projects, say how it is licensed.
+The default arm mount is `0 0 0.18` relative to `chassis`. Adjust it without
+editing the xacro:
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```bash
+ros2 launch curtmini_piper_bringup bringup.launch.py \
+  arm_mount_xyz:="0 0 0.20" arm_mount_rpy:="0 0 0"
+```
+
+## Dependency troubleshooting
+
+The setuptools deprecation messages printed before the build starts are
+warnings. The fatal error in the example above is CMake being unable to find
+`candle_ros2`.
+
+If CMake cannot find `candle_ros2`, confirm that the source import succeeded:
+
+```bash
+cd ~/piper_tests2
+colcon list | grep -E '^(candle_ros2|openzen_driver)[[:space:]]'
+```
+
+Both packages should be listed. If either is missing, repeat the corresponding
+`vcs import` command from the workspace setup section.
+
+Before starting real Piper hardware, verify that its Python SDK is importable:
+
+```bash
+python3 -c "import pyAgxArm; print(pyAgxArm.__file__)"
+```
+
+The current MoveIt installation also reports a missing
+`libgeometric_shapes.so.2.3.4` when loading its optional point-cloud octomap
+updater. Arm planning and trajectory control still start successfully, but
+depth-camera octomap updates require that system library mismatch to be fixed.

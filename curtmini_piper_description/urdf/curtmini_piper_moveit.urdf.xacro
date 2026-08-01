@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="curtmini_piper">
+  <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_arm.xacro" />
+
+  <xacro:arg name="simulation" default="False" />
+  <xacro:arg name="arm_prefix" default="piper_" />
+  <xacro:arg name="arm_mount_xyz" default="0 0 0.18" />
+  <xacro:arg name="arm_mount_rpy" default="0 0 0" />
+  <xacro:arg name="tcp_offset_xyz" default="0 0 0" />
+  <xacro:arg name="tcp_offset_rpy" default="0 0 0" />
+
+  <link name="base_link" />
+
+  <link name="chassis">
+    <visual>
+      <geometry>
+        <mesh filename="package://curt_mini/models/curt_mini/meshes/base_link.STL" />
+      </geometry>
+      <material name="curt_mini_body">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <!-- The upstream 30 MB chassis STL is intentionally simplified for FCL. -->
+    <collision>
+      <origin xyz="0 0 0.06" rpy="0 0 0" />
+      <geometry>
+        <box size="0.56 0.40 0.20" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="base_to_chassis" type="fixed">
+    <parent link="base_link" />
+    <child link="chassis" />
+  </joint>
+
+  <xacro:macro name="curt_mini_wheel" params="link joint mesh xyz collision_y">
+    <link name="${link}">
+      <visual>
+        <geometry>
+          <mesh filename="package://curt_mini/models/curt_mini/meshes/${mesh}" />
+        </geometry>
+        <material name="curt_mini_body" />
+      </visual>
+      <collision>
+        <origin xyz="0 ${collision_y} 0" rpy="1.5707963267948966 0 0" />
+        <geometry>
+          <cylinder radius="0.13" length="0.08" />
+        </geometry>
+      </collision>
+    </link>
+    <joint name="${joint}" type="continuous">
+      <origin xyz="${xyz}" rpy="0 0 0" />
+      <parent link="base_link" />
+      <child link="${link}" />
+      <axis xyz="0 1 0" />
+      <limit effort="50.0" velocity="20.0" />
+    </joint>
+  </xacro:macro>
+
+  <xacro:curt_mini_wheel
+    link="front_right_wheel"
+    joint="front_right_motor"
+    mesh="wheel4_link.STL"
+    xyz="0.25995 -0.258 -0.030204"
+    collision_y="0.01"
+  />
+  <xacro:curt_mini_wheel
+    link="front_left_wheel"
+    joint="front_left_motor"
+    mesh="wheel1_link.STL"
+    xyz="0.25995 0.258 -0.030204"
+    collision_y="-0.01"
+  />
+  <xacro:curt_mini_wheel
+    link="back_right_wheel"
+    joint="back_right_motor"
+    mesh="wheel3_link.STL"
+    xyz="-0.26 -0.258 -0.022755"
+    collision_y="0.01"
+  />
+  <xacro:curt_mini_wheel
+    link="back_left_wheel"
+    joint="back_left_motor"
+    mesh="wheel2_link.STL"
+    xyz="-0.26 0.258 -0.022755"
+    collision_y="-0.01"
+  />
+
+  <link name="imu_link" />
+  <joint name="base_link_to_imu" type="fixed">
+    <parent link="base_link" />
+    <child link="imu_link" />
+    <origin xyz="0.062 0 0.015" rpy="0 0 1.5707963267948966" />
+  </joint>
+
+  <xacro:piper_arm
+    prefix="$(arg arm_prefix)"
+    parent="chassis"
+    mount_xyz="$(arg arm_mount_xyz)"
+    mount_rpy="$(arg arm_mount_rpy)"
+    tcp_offset_xyz="$(arg tcp_offset_xyz)"
+    tcp_offset_rpy="$(arg tcp_offset_rpy)"
+  />
+</robot>

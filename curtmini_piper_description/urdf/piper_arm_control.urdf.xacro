@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="prefixed_piper_control">
+  <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_arm.xacro" />
+  <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_ros2_control.xacro" />
+
+  <xacro:arg name="arm_prefix" default="piper_" />
+
+  <link name="$(arg arm_prefix)world" />
+  <xacro:piper_arm
+    prefix="$(arg arm_prefix)"
+    parent="$(arg arm_prefix)world"
+    mount_xyz="0 0 0"
+    mount_rpy="0 0 0"
+    tcp_offset_xyz="0 0 0"
+    tcp_offset_rpy="0 0 0"
+  />
+  <xacro:piper_ros2_control prefix="$(arg arm_prefix)" />
+</robot>
