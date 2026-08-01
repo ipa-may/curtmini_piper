@@ -1,0 +1,10 @@
+repositories:
+    curt_mini:
+        type: git
+        url: https://github.com/ipa320/curt_mini.git
+        version: main
+    
+    agx_arm_ros:
+        type: git
+        url: https://github.com/agilexrobotics/agx_arm_ros.git
+        version: ros2

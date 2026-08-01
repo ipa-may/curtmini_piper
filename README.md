@@ -1,4 +1,8 @@
-# Curt Mini + Piper
+# Curt Mini with Piper Arm
+
+<p align="center">
+  <img src="doc/curtmini_piper_picture.png" alt="Curt Mini with Piper arm" width="300">
+</p>
 
 This folder contains two ROS 2 packages:
 
@@ -47,13 +51,17 @@ An `already initialized` message can be ignored. Update the rosdep database:
 rosdep update
 ```
 
+Add dependency repos:
+```sh
+vcs import src \
+  < src/curtmini_piper/dependencies.repos
+```
+
 Import the source dependencies pinned by the Curt Mini packages. The
 `--skip-existing` option makes these commands safe to repeat without replacing
 existing checkouts:
 
-```bash
-cd ~/piper_tests2
-
+```sh
 vcs import --recursive --skip-existing src \
   < src/curt_mini/ipa_ros2_control/ipa_ros2_control.repos
 vcs import --recursive --skip-existing src \
@@ -65,24 +73,33 @@ These manifests provide:
 - `candle_ros2` v2.1.2, required by the Curt Mini hardware interface.
 - `openzen_driver`, required by the Curt Mini IMU launch.
 
+```sh
+cd src/agx_arm_ros
+git submodule update --init --recursive src/agx_arm_description/agx_arm_urdf
+```
+
 Install the Python SDK used by the Piper hardware node:
 
 Create a virtual environment
 ```sh
-uv venv
+uv venv curtmini_piper
 ```
 
 Install pyAxArm python requirements
 ```bash
-uv pip install --user --break-system-packages \
+uv pip install --break-system-packages \
   "git+https://github.com/agilexrobotics/pyAgxArm.git"
+```
+
+```sh
+uv pip install numpy pyyaml
 ```
 
 Install the remaining declared ROS and system dependencies:
 
+From the workspace:
 ```bash
-cd ~/piper_tests2
-rosdep install --from-paths src --ignore-src --rosdistro jazzy -r -y \
+rosdep install --from-paths src --ignore-src --rosdistro jazzy -ry \
   --skip-keys "warehouse_ros_mongo"
 ```
 
@@ -95,7 +112,6 @@ optional MongoDB warehouse backend.
 From the workspace root:
 
 ```bash
-cd ~/piper_tests2
 source /opt/ros/jazzy/setup.bash
 colcon build --packages-up-to \
   curtmini_piper_description curtmini_piper_bringup
