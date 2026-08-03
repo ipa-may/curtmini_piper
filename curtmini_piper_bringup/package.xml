@@ -4,7 +4,7 @@
   <name>curtmini_piper_bringup</name>
   <version>0.1.0</version>
   <description>Hardware bringup, MoveIt, and RViz for Curt Mini with a Piper arm.</description>
-  <maintainer email="tobias.rainer.schaefle@ipa.fraunhofer.de">ipa-trs</maintainer>
+  <maintainer email="yasmine.makkaoui@ipa.fraunhofer.de">ipa-may</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -16,6 +16,7 @@
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>curt_mini</exec_depend>
   <exec_depend>curtmini_piper_description</exec_depend>
+  <exec_depend>curtmini_piper_moveit_config</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>ipa_ros2_control</exec_depend>
   <exec_depend>joy_linux</exec_depend>

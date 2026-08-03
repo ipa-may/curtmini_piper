@@ -4,14 +4,18 @@
   <img src="doc/curtmini_piper_picture.png" alt="Curt Mini with Piper arm" width="300">
 </p>
 
-This folder contains three ROS 2 packages:
+This repository contains five ROS 2 packages:
 
 - `curtmini_piper_description`: the existing Curt Mini model combined with a
   Piper arm whose links and joints use the `piper_` prefix.
+- `curtmini_piper_moveit_config`: shared SRDF, kinematics, joint limits,
+  planning, perception, and RViz configuration.
 - `curtmini_piper_bringup`: Curt Mini hardware bringup, AGX Piper control,
-  MoveIt, and RViz.
+  MoveIt runtime, and RViz.
 - `curtmini_piper_gz_sim`: Gazebo Harmonic simulation, simulated controllers,
-  sensor bridges, MoveIt, and RViz.
+  sensor bridges, MoveIt runtime, and RViz.
+- `curtmini_piper_motion_examples`: controller-independent MoveItPy planning
+  and execution examples for simulation and hardware.
 
 The prefix-aware Piper model and meshes come from `agx_arm_urdf`; the Curt Mini
 model and base controllers remain in `curt_mini`. This package owns only the
@@ -19,8 +23,7 @@ mount and TCP joints that connect the two models.
 
 ## Workspace setup
 
-The following instructions assume ROS 2 Jazzy and a workspace at
-`~/piper_tests2`.
+The following instructions assume ROS 2 Jazzy and a workspace at `~/new_ws`.
 
 Install the workspace tools and system dependencies:
 
@@ -80,7 +83,8 @@ Install the Python SDK used by the Piper hardware node:
 
 Create a virtual environment
 ```sh
-uv venv curtmini_piper
+uv venv .venv
+source .venv/bin/activate
 ```
 
 Install pyAxArm python requirements
@@ -112,34 +116,16 @@ From the workspace root:
 ```bash
 source /opt/ros/jazzy/setup.bash
 colcon build --packages-up-to \
-  curtmini_piper_description curtmini_piper_bringup curtmini_piper_gz_sim
+  curtmini_piper_bringup \
+  curtmini_piper_gz_sim \
+  curtmini_piper_motion_examples
 source install/setup.bash
 ```
 
-## Gazebo simulation
+## Simulation
 
-Start Gazebo Harmonic, the simulated base and arm controllers, MoveIt, and
-RViz:
+See github repo : [curtmini piper gz sim](https://github.com/ipa-may/curtmini_piper_gz_sim)
 
-```bash
-ros2 launch curtmini_piper_gz_sim simulation.launch.py
-```
-
-The simulation uses one Gazebo-owned controller manager for both the Curt Mini
-base and Piper arm. It publishes simulation time on `/clock`, IMU data on
-`/imu/data`, wheel odometry on `/base_controller/odom`, and the combined robot
-state on `/joint_states`.
-
-Run without Gazebo and RViz windows for headless testing:
-
-```bash
-ros2 launch curtmini_piper_gz_sim simulation.launch.py \
-  gui:=false use_rviz:=false
-```
-
-Joystick teleoperation is disabled by default. Enable it with
-`start_joystick:=true`. Mount and TCP arguments are the same as the real robot
-bringup.
 
 ## Real robot
 
@@ -164,6 +150,47 @@ robot-state-publisher description, but is not used as an FCL collision mesh.
 ros2 launch curtmini_piper_bringup bringup.launch.py \
   start_base:=false start_arm_hardware:=false
 ```
+
+## Standalone MoveIt RViz
+
+Start simulation or hardware bringup with `use_rviz:=false`, then run RViz as
+a separate process:
+
+```bash
+# Simulation
+ros2 launch curtmini_piper_moveit_config moveit_rviz.launch.py \
+  use_sim_time:=true
+
+# Real robot
+ros2 launch curtmini_piper_moveit_config moveit_rviz.launch.py \
+  use_sim_time:=false
+```
+
+This launch starts only RViz and expects the active bringup to provide
+`move_group`, `/joint_states`, transforms, and the planning scene. Mount and
+TCP offset arguments must match those passed to the bringup launch.
+
+## MoveItPy
+
+Start the simulation or real robot bringup first. Planning is non-executing by
+default:
+
+```bash
+ros2 run curtmini_piper_motion_examples moveit_goal
+```
+
+Plan and execute in simulation:
+
+```bash
+ros2 run curtmini_piper_motion_examples moveit_goal --ros-args \
+  -p controller_mode:=simulation \
+  -p use_sim_time:=true \
+  -p plan_only:=false
+```
+
+For physical hardware, set `controller_mode:=hardware` and leave
+`use_sim_time:=false`. See the package README for joint, pose, mount, and TCP
+parameters.
 
 ## Mount calibration
 

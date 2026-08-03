@@ -44,6 +44,9 @@ def _build_moveit_config(context):
     description_share = Path(
         get_package_share_directory("curtmini_piper_description")
     )
+    bringup_share = Path(
+        get_package_share_directory("curtmini_piper_bringup")
+    )
     mount_xyz = " ".join(_three_values(context, "arm_mount_xyz"))
     mount_rpy = " ".join(_three_values(context, "arm_mount_rpy"))
     tcp_xyz = " ".join(_three_values(context, "tcp_offset_xyz"))
@@ -70,7 +73,8 @@ def _build_moveit_config(context):
 
     moveit_config = (
         MoveItConfigsBuilder(
-            "curtmini_piper", package_name="curtmini_piper_bringup"
+            "curtmini_piper",
+            package_name="curtmini_piper_moveit_config",
         )
         .robot_description(
             file_path=str(moveit_description_file),
@@ -82,7 +86,11 @@ def _build_moveit_config(context):
         .robot_description_kinematics(file_path="config/kinematics.yaml")
         .joint_limits(file_path="config/joint_limits.yaml")
         .sensors_3d(file_path="config/sensors_3d.yaml")
-        .trajectory_execution(file_path="config/moveit_controllers.yaml")
+        .trajectory_execution(
+            file_path=str(
+                bringup_share / "config" / "moveit_controllers.yaml"
+            )
+        )
         .to_moveit_configs()
     )
     return moveit_config, full_robot_description
@@ -306,8 +314,8 @@ def _arm_actions(context):
 
 def _launch_setup(context):
     moveit_config, full_robot_description = _build_moveit_config(context)
-    bringup_share = Path(
-        get_package_share_directory("curtmini_piper_bringup")
+    moveit_share = Path(
+        get_package_share_directory("curtmini_piper_moveit_config")
     )
 
     move_group_configuration = {
@@ -353,7 +361,7 @@ def _launch_setup(context):
                 output="log",
                 arguments=[
                     "-d",
-                    str(bringup_share / "config" / "moveit.rviz"),
+                    str(moveit_share / "config" / "moveit.rviz"),
                 ],
                 parameters=[
                     moveit_config.robot_description,

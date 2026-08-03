@@ -4,7 +4,7 @@
   <name>curtmini_piper_description</name>
   <version>0.1.0</version>
   <description>Combined Curt Mini mobile base and prefixed Piper arm description.</description>
-  <maintainer email="tobias.rainer.schaefle@ipa.fraunhofer.de">ipa-trs</maintainer>
+  <maintainer email="yasmine.makkaoui@ipa.fraunhofer.de">ipa-may</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

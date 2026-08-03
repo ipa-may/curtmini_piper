@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
-project(curtmini_piper_gz_sim)
+project(curtmini_piper_moveit_config)
 
 find_package(ament_cmake REQUIRED)
 
 install(
-  DIRECTORY config launch worlds
+  DIRECTORY config launch
   DESTINATION share/${PROJECT_NAME}
 )
 
