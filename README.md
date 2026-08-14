@@ -124,6 +124,11 @@ See github repo : [curtmini piper gz sim](https://github.com/ipa-may/curtmini_pi
 
 ## Real robot
 
+Activate the CAN bus. From the workspace:
+```sh
+bash src/piper_driver/agx_arm_ros/scripts/can_activate.sh
+```
+
 Piper + Mobile Base bringup
 ```bash
 ros2 launch curtmini_piper_bringup bringup.launch.py
