@@ -104,12 +104,12 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "tcp_offset_xyz",
-                default_value="0 0 0",
+                default_value="0.0 0.0 0.0",
                 description="TCP translation from piper_link6.",
             ),
             DeclareLaunchArgument(
                 "tcp_offset_rpy",
-                default_value="0 0 0",
+                default_value="0.0 0.0 0.0",
                 description="TCP rotation from piper_link6.",
             ),
             OpaqueFunction(function=_launch_setup),

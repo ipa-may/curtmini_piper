@@ -101,13 +101,8 @@ Install the remaining declared ROS and system dependencies:
 
 From the workspace:
 ```bash
-rosdep install --from-paths src --ignore-src --rosdistro jazzy -ry \
-  --skip-keys "warehouse_ros_mongo"
+rosdep install --from-paths src --ignore-src --rosdistro jazzy -ry
 ```
-
-`warehouse_ros_mongo` is declared by the upstream `agx_arm_moveit` package but
-has no rosdep definition for Ubuntu Noble. This bringup does not start the
-optional MongoDB warehouse backend.
 
 ## Build
 
@@ -129,8 +124,14 @@ See github repo : [curtmini piper gz sim](https://github.com/ipa-may/curtmini_pi
 
 ## Real robot
 
+Piper + Mobile Base bringup
 ```bash
 ros2 launch curtmini_piper_bringup bringup.launch.py
+```
+
+Piper only 
+```sh
+ros2 launch curtmini_piper_bringup bringup.launch.py start_base:=false
 ```
 
 The defaults start the Curt Mini hardware, joystick, IMU, Piper on `can0`,

@@ -35,6 +35,14 @@ def _three_values(context, name):
     return values
 
 
+def _float_array_literal(values):
+    try:
+        float_values = [float(value) for value in values]
+    except ValueError as error:
+        raise RuntimeError("TCP offset values must be numeric") from error
+    return str(float_values)
+
+
 def _find_serial_device(prefix, default):
     matches = [name for name in os.listdir("/dev") if name.startswith(prefix)]
     return matches[0] if len(matches) == 1 else default
@@ -257,7 +265,7 @@ def _arm_actions(context):
 
     xyz = _three_values(context, "tcp_offset_xyz")
     rpy = _three_values(context, "tcp_offset_rpy")
-    tcp_offset = "[" + ", ".join(xyz + rpy) + "]"
+    tcp_offset = _float_array_literal(xyz + rpy)
     agx_ctrl_share = Path(get_package_share_directory("agx_arm_ctrl"))
 
     actions.extend(
@@ -441,12 +449,12 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "tcp_offset_xyz",
-                default_value="0 0 0",
+                default_value="0.0 0.0 0.0",
                 description="TCP translation from piper_link6.",
             ),
             DeclareLaunchArgument(
                 "tcp_offset_rpy",
-                default_value="0 0 0",
+                default_value="0.0 0.0 0.0",
                 description="TCP rotation from piper_link6.",
             ),
             DeclareLaunchArgument(
