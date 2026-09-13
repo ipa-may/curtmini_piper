@@ -1,0 +1,22 @@
+# ROS 2 / colcon build output
+build/
+install/
+log/
+
+# Python caches, package metadata, and virtual environments
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+
+# Local editor settings and temporary files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS metadata
+.DS_Store
+Thumbs.db
