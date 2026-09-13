@@ -14,7 +14,7 @@
   <link name="chassis">
     <visual>
       <geometry>
-        <mesh filename="package://curt_mini/models/curt_mini/meshes/base_link.STL" />
+        <mesh filename="package://curt_mini_description/models/curt_mini/meshes/base_link.STL" />
       </geometry>
       <material name="curt_mini_body">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -37,7 +37,7 @@
     <link name="${link}">
       <visual>
         <geometry>
-          <mesh filename="package://curt_mini/models/curt_mini/meshes/${mesh}" />
+          <mesh filename="package://curt_mini_description/models/curt_mini/meshes/${mesh}" />
         </geometry>
         <material name="curt_mini_body" />
       </visual>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="curtmini_piper">
   <!-- Reuse the complete Curt Mini model, including its ros2_control block. -->
-  <xacro:include filename="$(find curt_mini)/models/curt_mini/robot.urdf.xacro" />
+  <xacro:include filename="$(find curt_mini_description)/models/curt_mini/robot.urdf.xacro" />
   <xacro:include filename="$(find agx_arm_urdf)/piper/urdf/piper_arm.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_ros2_control.xacro" />
 

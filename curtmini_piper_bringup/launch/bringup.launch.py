@@ -116,7 +116,9 @@ def _base_actions(context):
             PythonLaunchDescriptionSource(
                 str(ipa_share / "launch" / "ros2_control.launch.py")
             ),
-            launch_arguments={"robot": "curt_mini"}.items(),
+            launch_arguments={
+                "controllers_file": str(curt_share / "config" / "ros2_control.yaml")
+            }.items(),
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(

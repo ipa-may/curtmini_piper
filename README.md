@@ -18,7 +18,7 @@ This repository contains five ROS 2 packages:
   and execution examples for simulation and hardware.
 
 The prefix-aware Piper model and meshes come from `agx_arm_urdf`; the Curt Mini
-model and base controllers remain in `curt_mini`. This package owns only the
+model lives in `curt_mini_description` and base controllers remain in `curt_mini`. This package owns only the
 mount and TCP joints that connect the two models.
 
 ## Workspace setup
