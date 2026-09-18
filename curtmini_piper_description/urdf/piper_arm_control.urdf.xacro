@@ -4,9 +4,14 @@
   <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_ros2_control.xacro" />
 
   <xacro:arg name="arm_prefix" default="piper_" />
+  <xacro:arg
+    name="piper_joint_limits_file"
+    default="$(find agx_arm_urdf)/piper/config/joint_position_limits.yaml" />
 
   <link name="$(arg arm_prefix)world" />
-  <xacro:piper_arm prefix="$(arg arm_prefix)" />
+  <xacro:piper_arm
+    prefix="$(arg arm_prefix)"
+    joint_limits_file="$(arg piper_joint_limits_file)" />
 
   <joint name="$(arg arm_prefix)mount_joint" type="fixed">
     <parent link="$(arg arm_prefix)world" />

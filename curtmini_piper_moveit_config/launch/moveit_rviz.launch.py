@@ -11,6 +11,15 @@ from moveit_configs_utils import MoveItConfigsBuilder
 ARM_PREFIX = "piper_"
 
 
+def _default_piper_joint_limits_file():
+    return str(
+        Path(get_package_share_directory("agx_arm_urdf"))
+        / "piper"
+        / "config"
+        / "joint_position_limits.yaml"
+    )
+
+
 def _as_bool(context, name):
     return LaunchConfiguration(name).perform(context).lower() == "true"
 
@@ -39,6 +48,9 @@ def _launch_setup(context):
         "arm_mount_rpy": _three_values(context, "arm_mount_rpy"),
         "tcp_offset_xyz": _three_values(context, "tcp_offset_xyz"),
         "tcp_offset_rpy": _three_values(context, "tcp_offset_rpy"),
+        "piper_joint_limits_file": LaunchConfiguration(
+            "piper_joint_limits_file"
+        ).perform(context),
     }
     moveit_config = (
         MoveItConfigsBuilder(
@@ -111,6 +123,11 @@ def generate_launch_description():
                 "tcp_offset_rpy",
                 default_value="0.0 0.0 0.0",
                 description="TCP rotation from piper_link6.",
+            ),
+            DeclareLaunchArgument(
+                "piper_joint_limits_file",
+                default_value=_default_piper_joint_limits_file(),
+                description="YAML file containing Piper URDF joint limits.",
             ),
             OpaqueFunction(function=_launch_setup),
         ]

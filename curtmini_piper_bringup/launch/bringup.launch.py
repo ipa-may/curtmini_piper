@@ -10,6 +10,7 @@ from launch.actions import (
     IncludeLaunchDescription,
     OpaqueFunction,
 )
+from launch.conditions import UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
@@ -19,6 +20,15 @@ from moveit_configs_utils import MoveItConfigsBuilder
 
 ARM_PREFIX = "piper_"
 ARM_NAMESPACE = "piper"
+
+
+def _default_piper_joint_limits_file():
+    return str(
+        Path(get_package_share_directory("agx_arm_urdf"))
+        / "piper"
+        / "config"
+        / "joint_position_limits.yaml"
+    )
 
 
 def _as_bool(context, name):
@@ -59,6 +69,9 @@ def _build_moveit_config(context):
     mount_rpy = " ".join(_three_values(context, "arm_mount_rpy"))
     tcp_xyz = " ".join(_three_values(context, "tcp_offset_xyz"))
     tcp_rpy = " ".join(_three_values(context, "tcp_offset_rpy"))
+    piper_joint_limits_file = LaunchConfiguration(
+        "piper_joint_limits_file"
+    ).perform(context)
 
     mappings = {
         "simulation": "False",
@@ -67,6 +80,7 @@ def _build_moveit_config(context):
         "arm_mount_rpy": mount_rpy,
         "tcp_offset_xyz": tcp_xyz,
         "tcp_offset_rpy": tcp_rpy,
+        "piper_joint_limits_file": piper_joint_limits_file,
     }
 
     full_description_file = (
@@ -202,6 +216,8 @@ def _arm_actions(context):
                     / "piper_arm_control.urdf.xacro"
                 ),
                 f" arm_prefix:={ARM_PREFIX}",
+                " piper_joint_limits_file:=",
+                LaunchConfiguration("piper_joint_limits_file"),
             ]
         ),
         value_type=str,
@@ -289,8 +305,11 @@ def _arm_actions(context):
                     "speed_percent": LaunchConfiguration(
                         "arm_speed_percent"
                     ),
+                    "fast_mode": LaunchConfiguration("fast_mode"),
                     "tcp_offset": tcp_offset,
-                    "control_enabled": "false",
+                    "control_enabled": LaunchConfiguration(
+                        "control_enabled"
+                    ),
                     "log_level": LaunchConfiguration("log_level"),
                 }.items(),
             ),
@@ -316,6 +335,9 @@ def _arm_actions(context):
                         "gate_service_name": "/piper/control_enable",
                     }
                 ],
+                condition=UnlessCondition(
+                    LaunchConfiguration("control_enabled")
+                ),
             ),
         ]
     )
@@ -440,6 +462,18 @@ def generate_launch_description():
                 description="Piper hardware speed percentage.",
             ),
             DeclareLaunchArgument(
+                "control_enabled",
+                default_value="true",
+                choices=["true", "false"],
+                description="Whether the Piper driver accepts control commands.",
+            ),
+            DeclareLaunchArgument(
+                "fast_mode",
+                default_value="true",
+                choices=["true", "false"],
+                description="Use streaming joint commands for Piper control.",
+            ),
+            DeclareLaunchArgument(
                 "arm_mount_xyz",
                 default_value="0 0 0.18",
                 description="Piper mount translation from Curt Mini chassis.",
@@ -458,6 +492,11 @@ def generate_launch_description():
                 "tcp_offset_rpy",
                 default_value="0.0 0.0 0.0",
                 description="TCP rotation from piper_link6.",
+            ),
+            DeclareLaunchArgument(
+                "piper_joint_limits_file",
+                default_value=_default_piper_joint_limits_file(),
+                description="YAML file containing Piper URDF joint limits.",
             ),
             DeclareLaunchArgument(
                 "log_level",

@@ -10,8 +10,13 @@
   <xacro:arg name="arm_mount_rpy" default="0 0 0" />
   <xacro:arg name="tcp_offset_xyz" default="0 0 0" />
   <xacro:arg name="tcp_offset_rpy" default="0 0 0" />
+  <xacro:arg
+    name="piper_joint_limits_file"
+    default="$(find agx_arm_urdf)/piper/config/joint_position_limits.yaml" />
 
-  <xacro:piper_arm prefix="$(arg arm_prefix)" />
+  <xacro:piper_arm
+    prefix="$(arg arm_prefix)"
+    joint_limits_file="$(arg piper_joint_limits_file)" />
 
   <joint name="$(arg arm_prefix)mount_joint" type="fixed">
     <parent link="chassis" />
