@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!--
+    Hardware-neutral approximation of a Hokuyo UTM-30LX-EW.
+
+    The link frame is the laser measurement frame. The primitive body is only
+    an envelope for visualization and collision checking; it can be replaced
+    by a licensed CAD mesh without changing the frame or joint names.
+  -->
+  <xacro:macro name="hokuyo_utm_30lx_ew" params="parent xyz rpy">
+    <link name="hokuyo_link">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.210" />
+        <inertia
+          ixx="0.000201254"
+          ixy="0"
+          ixz="0"
+          iyy="0.000201254"
+          iyz="0"
+          izz="0.000134540"
+        />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.062 0.062 0.0875" />
+        </geometry>
+        <material name="hokuyo_dark_grey">
+          <color rgba="0.12 0.12 0.12 1" />
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="0.062 0.062 0.0875" />
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="hokuyo_joint" type="fixed">
+      <parent link="${parent}" />
+      <child link="hokuyo_link" />
+      <origin xyz="${xyz}" rpy="${rpy}" />
+    </joint>
+  </xacro:macro>
+</robot>
