@@ -1,0 +1,4 @@
+moveit-configs-utils
+moveit-kinematics
+moveit-planners-ompl
+xacro

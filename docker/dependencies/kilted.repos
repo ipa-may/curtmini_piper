@@ -2,15 +2,15 @@ repositories:
   curt_mini:
     type: git
     url: https://github.com/ipa-may/curt_mini.git
-    version: main
+    version: 4267c0e745ac22dcd6556fac6d9456376e4a449d
   piper_driver/agx_arm_ros:
     type: git
     url: https://github.com/ipa-may/agx_arm_ros.git
-    version: ros2
+    version: 9d74710fd2aa18e2aa7d7945717cc95d6c16fcf1
   piper_driver/agx_arm_urdf:
     type: git
     url: https://github.com/ipa-may/agx_arm_urdf.git
-    version: main
+    version: 73c2487db05f3e10b23b351a5cae80a7ebaf6ee6
   candle_ros2:
     type: git
     url: https://github.com/mabrobotics/candle_ros2.git

@@ -1,0 +1,12 @@
+.env
+.git
+.github
+**/__pycache__
+**/*.pyc
+build
+install
+log
+.industrial_ci
+industrial_ci
+.venv
+.pytest_cache
