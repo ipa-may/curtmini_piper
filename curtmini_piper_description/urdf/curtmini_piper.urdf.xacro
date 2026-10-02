@@ -50,6 +50,7 @@
       hardware_plugin="gz_ros2_control/GazeboSimSystem"
       joint2_initial_value="0.1"
       joint3_initial_value="-0.1"
+      joint6_initial_value="-1.95"
     />
   </xacro:if>
 </robot>
