@@ -9,6 +9,14 @@ x-build-args: &build-args
   OCI_SOURCE: ${OCI_SOURCE:-}
   OCI_REVISION: ${OCI_REVISION:-unknown}
 
+x-geometry-config: &geometry-config
+  type: bind
+  source: ../curtmini_piper_description/config
+  target: /opt/ws/install/share/curtmini_piper_description/config
+  read_only: true
+  bind:
+    create_host_path: false
+
 x-moveit-rviz: &moveit-rviz
   image: ${IMAGE_PREFIX:-curtmini-piper}-moveit-rviz:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
   build:
@@ -23,6 +31,8 @@ x-moveit-rviz: &moveit-rviz
   init: true
   environment:
     <<: *ros-environment
+  volumes:
+    - *geometry-config
 
 x-moveitpy: &moveitpy
   image: ${IMAGE_PREFIX:-curtmini-piper}-moveitpy:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
@@ -38,6 +48,8 @@ x-moveitpy: &moveitpy
   init: true
   environment:
     <<: *ros-environment
+  volumes:
+    - *geometry-config
 
 x-keyboard-teleop: &keyboard-teleop
   image: ${IMAGE_PREFIX:-curtmini-piper}-teleop:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
@@ -74,6 +86,7 @@ services:
       <<: *ros-environment
     volumes:
       - /dev/bus/usb:/dev/bus/usb
+      - *geometry-config
     devices:
       - ${LPMS_DEVICE:-/dev/ttyLPMSCA3D00510053}:${LPMS_DEVICE:-/dev/ttyLPMSCA3D00510053}
       - ${JOYSTICK_DEVICE:-/dev/input/js0}:${JOYSTICK_DEVICE:-/dev/input/js0}
@@ -90,10 +103,6 @@ services:
       - use_rviz:=false
       - control_enabled:=${CONTROL_ENABLED:-true}
       - fast_mode:=${FAST_MODE:-true}
-      - arm_mount_xyz:=${ARM_MOUNT_XYZ:-0 0 0.18}
-      - arm_mount_rpy:=${ARM_MOUNT_RPY:-0 0 0}
-      - tcp_offset_xyz:=${TCP_OFFSET_XYZ:-0 0 0}
-      - tcp_offset_rpy:=${TCP_OFFSET_RPY:-0 0 0}
     stop_grace_period: 20s
 
   piper-bringup:
@@ -111,6 +120,8 @@ services:
     init: true
     environment:
       <<: *ros-environment
+    volumes:
+      - *geometry-config
     command:
       - ros2
       - launch
@@ -124,10 +135,6 @@ services:
       - use_rviz:=false
       - control_enabled:=${CONTROL_ENABLED:-true}
       - fast_mode:=${FAST_MODE:-true}
-      - arm_mount_xyz:=${ARM_MOUNT_XYZ:-0 0 0.18}
-      - arm_mount_rpy:=${ARM_MOUNT_RPY:-0 0 0}
-      - tcp_offset_xyz:=${TCP_OFFSET_XYZ:-0 0 0}
-      - tcp_offset_rpy:=${TCP_OFFSET_RPY:-0 0 0}
     stop_grace_period: 20s
 
   moveit-rviz-sim:
@@ -144,10 +151,6 @@ services:
       - curtmini_piper_moveit_config
       - moveit_rviz.launch.py
       - use_sim_time:=true
-      - arm_mount_xyz:=${ARM_MOUNT_XYZ:-0 0 0.18}
-      - arm_mount_rpy:=${ARM_MOUNT_RPY:-0 0 0}
-      - tcp_offset_xyz:=${TCP_OFFSET_XYZ:-0 0 0}
-      - tcp_offset_rpy:=${TCP_OFFSET_RPY:-0 0 0}
 
   moveit-rviz-hardware:
     <<: *moveit-rviz
@@ -163,10 +166,6 @@ services:
       - curtmini_piper_moveit_config
       - moveit_rviz.launch.py
       - use_sim_time:=false
-      - arm_mount_xyz:=${ARM_MOUNT_XYZ:-0 0 0.18}
-      - arm_mount_rpy:=${ARM_MOUNT_RPY:-0 0 0}
-      - tcp_offset_xyz:=${TCP_OFFSET_XYZ:-0 0 0}
-      - tcp_offset_rpy:=${TCP_OFFSET_RPY:-0 0 0}
 
   moveitpy-sim:
     <<: *moveitpy

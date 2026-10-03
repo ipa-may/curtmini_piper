@@ -50,20 +50,12 @@ class GoalConfig:
     velocity_scaling: float
     acceleration_scaling: float
     use_sim_time: bool
-    arm_mount_xyz: list[float]
-    arm_mount_rpy: list[float]
-    tcp_offset_xyz: list[float]
-    tcp_offset_rpy: list[float]
 
 
 def _as_float_list(value, name: str) -> list[float]:
     if not isinstance(value, Sequence) or isinstance(value, str):
         raise ValueError(f"{name} must be a sequence")
     return [float(item) for item in value]
-
-
-def _three_values(values: list[float]) -> str:
-    return " ".join(str(value) for value in values)
 
 
 def _controller_configuration(controller_name: str) -> dict:
@@ -91,10 +83,6 @@ def build_moveit_config(config: GoalConfig) -> dict:
     mappings = {
         "simulation": "False",
         "arm_prefix": "piper_",
-        "arm_mount_xyz": _three_values(config.arm_mount_xyz),
-        "arm_mount_rpy": _three_values(config.arm_mount_rpy),
-        "tcp_offset_xyz": _three_values(config.tcp_offset_xyz),
-        "tcp_offset_rpy": _three_values(config.tcp_offset_rpy),
     }
     moveit_config = (
         MoveItConfigsBuilder(
@@ -171,10 +159,6 @@ def _read_config() -> GoalConfig:
         node.declare_parameter("planning_time", 5.0)
         node.declare_parameter("velocity_scaling", 0.1)
         node.declare_parameter("acceleration_scaling", 0.1)
-        node.declare_parameter("arm_mount_xyz", [0.0, 0.0, 0.18])
-        node.declare_parameter("arm_mount_rpy", [0.0, 0.0, 0.0])
-        node.declare_parameter("tcp_offset_xyz", [0.0, 0.0, 0.0])
-        node.declare_parameter("tcp_offset_rpy", [0.0, 0.0, 0.0])
 
         config = GoalConfig(
             goal_type=node.get_parameter("goal_type").value,
@@ -209,22 +193,6 @@ def _read_config() -> GoalConfig:
                 node.get_parameter("acceleration_scaling").value
             ),
             use_sim_time=bool(node.get_parameter("use_sim_time").value),
-            arm_mount_xyz=_as_float_list(
-                node.get_parameter("arm_mount_xyz").value,
-                "arm_mount_xyz",
-            ),
-            arm_mount_rpy=_as_float_list(
-                node.get_parameter("arm_mount_rpy").value,
-                "arm_mount_rpy",
-            ),
-            tcp_offset_xyz=_as_float_list(
-                node.get_parameter("tcp_offset_xyz").value,
-                "tcp_offset_xyz",
-            ),
-            tcp_offset_rpy=_as_float_list(
-                node.get_parameter("tcp_offset_rpy").value,
-                "tcp_offset_rpy",
-            ),
         )
     finally:
         node.destroy_node()
@@ -250,14 +218,6 @@ def validate_config(config: GoalConfig) -> None:
         raise ValueError("velocity_scaling must be in (0.0, 1.0]")
     if not 0.0 < config.acceleration_scaling <= 1.0:
         raise ValueError("acceleration_scaling must be in (0.0, 1.0]")
-    for name in (
-        "arm_mount_xyz",
-        "arm_mount_rpy",
-        "tcp_offset_xyz",
-        "tcp_offset_rpy",
-    ):
-        if len(getattr(config, name)) != 3:
-            raise ValueError(f"{name} must contain 3 values")
 
 
 def _set_goal(moveit, planning_component, config: GoalConfig) -> None:

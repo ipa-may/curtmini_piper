@@ -31,10 +31,6 @@ def _goal_config() -> GoalConfig:
         velocity_scaling=0.1,
         acceleration_scaling=0.1,
         use_sim_time=True,
-        arm_mount_xyz=[0.0, 0.0, 0.18],
-        arm_mount_rpy=[0.0] * 3,
-        tcp_offset_xyz=[0.0] * 3,
-        tcp_offset_rpy=[0.0] * 3,
     )
 
 

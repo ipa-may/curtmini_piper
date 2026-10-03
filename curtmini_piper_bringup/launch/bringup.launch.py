@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import xacro
+import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
@@ -35,22 +36,24 @@ def _as_bool(context, name):
     return LaunchConfiguration(name).perform(context).lower() == "true"
 
 
-def _three_values(context, name):
-    value = LaunchConfiguration(name).perform(context)
-    values = value.replace(",", " ").split()
-    if len(values) != 3:
-        raise RuntimeError(
-            f"Launch argument '{name}' must contain exactly three values"
-        )
-    return values
-
-
 def _float_array_literal(values):
     try:
         float_values = [float(value) for value in values]
     except ValueError as error:
         raise RuntimeError("TCP offset values must be numeric") from error
     return str(float_values)
+
+
+def _tcp_offset_literal():
+    geometry_file = (
+        Path(get_package_share_directory("curtmini_piper_description"))
+        / "config" / "geometry.yaml"
+    )
+    with geometry_file.open(encoding="utf-8") as stream:
+        tcp = yaml.safe_load(stream)["tcp_offset"]
+    values = [tcp["position"][axis] for axis in ("x", "y", "z")]
+    values += [tcp["rotation"][axis] for axis in ("r", "p", "y")]
+    return _float_array_literal(values)
 
 
 def _find_serial_device(prefix, default):
@@ -65,10 +68,6 @@ def _build_moveit_config(context):
     bringup_share = Path(
         get_package_share_directory("curtmini_piper_bringup")
     )
-    mount_xyz = " ".join(_three_values(context, "arm_mount_xyz"))
-    mount_rpy = " ".join(_three_values(context, "arm_mount_rpy"))
-    tcp_xyz = " ".join(_three_values(context, "tcp_offset_xyz"))
-    tcp_rpy = " ".join(_three_values(context, "tcp_offset_rpy"))
     piper_joint_limits_file = LaunchConfiguration(
         "piper_joint_limits_file"
     ).perform(context)
@@ -76,10 +75,6 @@ def _build_moveit_config(context):
     mappings = {
         "simulation": "False",
         "arm_prefix": ARM_PREFIX,
-        "arm_mount_xyz": mount_xyz,
-        "arm_mount_rpy": mount_rpy,
-        "tcp_offset_xyz": tcp_xyz,
-        "tcp_offset_rpy": tcp_rpy,
         "piper_joint_limits_file": piper_joint_limits_file,
     }
 
@@ -281,9 +276,7 @@ def _arm_actions(context):
     if not use_hardware:
         return actions
 
-    xyz = _three_values(context, "tcp_offset_xyz")
-    rpy = _three_values(context, "tcp_offset_rpy")
-    tcp_offset = _float_array_literal(xyz + rpy)
+    tcp_offset = _tcp_offset_literal()
     agx_ctrl_share = Path(get_package_share_directory("agx_arm_ctrl"))
 
     actions.extend(
@@ -472,26 +465,6 @@ def generate_launch_description():
                 default_value="true",
                 choices=["true", "false"],
                 description="Use streaming joint commands for Piper control.",
-            ),
-            DeclareLaunchArgument(
-                "arm_mount_xyz",
-                default_value="0 0 0.18",
-                description="Piper mount translation from Curt Mini chassis.",
-            ),
-            DeclareLaunchArgument(
-                "arm_mount_rpy",
-                default_value="0 0 0",
-                description="Piper mount rotation from Curt Mini chassis.",
-            ),
-            DeclareLaunchArgument(
-                "tcp_offset_xyz",
-                default_value="0.0 0.0 0.0",
-                description="TCP translation from piper_link6.",
-            ),
-            DeclareLaunchArgument(
-                "tcp_offset_rpy",
-                default_value="0.0 0.0 0.0",
-                description="TCP rotation from piper_link6.",
             ),
             DeclareLaunchArgument(
                 "piper_joint_limits_file",

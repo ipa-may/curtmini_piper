@@ -195,18 +195,15 @@ ros2 run curtmini_piper_motion_examples moveit_goal --ros-args \
 ```
 
 For physical hardware, set `controller_mode:=hardware` and leave
-`use_sim_time:=false`. See the package README for joint, pose, mount, and TCP
-parameters.
+`use_sim_time:=false`. See the package README for joint and pose parameters.
 
 ## Mount calibration
 
-The default arm mount is `0 0 0.18` relative to `chassis`. Adjust it without
-editing the xacro:
-
-```bash
-ros2 launch curtmini_piper_bringup bringup.launch.py \
-  arm_mount_xyz:="0 0 0.20" arm_mount_rpy:="0 0 0"
-```
+The arm mount, TCP offset, and lidar mount are defined in
+`curtmini_piper_description/config/geometry.yaml`. The arm and lidar mounts
+are relative to `chassis`; the TCP offset is relative to `piper_link6`.
+Update the YAML and restart bringup and planning clients together so their
+robot descriptions use the same geometry.
 
 ## Dependency troubleshooting
 
