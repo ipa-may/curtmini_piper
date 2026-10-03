@@ -10,7 +10,7 @@
     <joint name="piper_joint3" value="0.0" />
     <joint name="piper_joint4" value="0.0" />
     <joint name="piper_joint5" value="0.0" />
-    <joint name="piper_joint6" value="0.0" />
+    <joint name="piper_joint6" value="-1.95" />
   </group_state>
 
   <disable_collisions link1="chassis" link2="piper_base_link" reason="Adjacent" />

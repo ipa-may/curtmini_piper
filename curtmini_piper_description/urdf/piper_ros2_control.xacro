@@ -8,6 +8,7 @@
       hardware_plugin
       joint2_initial_value:=0.0
       joint3_initial_value:=0.0
+      joint6_initial_value:=0.0
     "
   >
     <ros2_control name="${prefix}${system_name}" type="system">
@@ -39,7 +40,10 @@
       />
       <xacro:piper_control_joint joint_name="joint4" initial_value="0.0" />
       <xacro:piper_control_joint joint_name="joint5" initial_value="0.0" />
-      <xacro:piper_control_joint joint_name="joint6" initial_value="0.0" />
+      <xacro:piper_control_joint
+        joint_name="joint6"
+        initial_value="${joint6_initial_value}"
+      />
     </ros2_control>
   </xacro:macro>
 </robot>
