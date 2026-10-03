@@ -24,16 +24,6 @@ def _as_bool(context, name):
     return LaunchConfiguration(name).perform(context).lower() == "true"
 
 
-def _three_values(context, name):
-    value = LaunchConfiguration(name).perform(context)
-    values = value.replace(",", " ").split()
-    if len(values) != 3:
-        raise RuntimeError(
-            f"Launch argument '{name}' must contain exactly three values"
-        )
-    return " ".join(values)
-
-
 def _launch_setup(context):
     description_share = Path(
         get_package_share_directory("curtmini_piper_description")
@@ -44,10 +34,6 @@ def _launch_setup(context):
     mappings = {
         "simulation": "False",
         "arm_prefix": ARM_PREFIX,
-        "arm_mount_xyz": _three_values(context, "arm_mount_xyz"),
-        "arm_mount_rpy": _three_values(context, "arm_mount_rpy"),
-        "tcp_offset_xyz": _three_values(context, "tcp_offset_xyz"),
-        "tcp_offset_rpy": _three_values(context, "tcp_offset_rpy"),
         "piper_joint_limits_file": LaunchConfiguration(
             "piper_joint_limits_file"
         ).perform(context),
@@ -103,26 +89,6 @@ def generate_launch_description():
                 default_value="false",
                 choices=["true", "false"],
                 description="Use the simulation clock.",
-            ),
-            DeclareLaunchArgument(
-                "arm_mount_xyz",
-                default_value="0 0 0.18",
-                description="Piper mount translation from Curt Mini chassis.",
-            ),
-            DeclareLaunchArgument(
-                "arm_mount_rpy",
-                default_value="0 0 0",
-                description="Piper mount rotation from Curt Mini chassis.",
-            ),
-            DeclareLaunchArgument(
-                "tcp_offset_xyz",
-                default_value="0.0 0.0 0.0",
-                description="TCP translation from piper_link6.",
-            ),
-            DeclareLaunchArgument(
-                "tcp_offset_rpy",
-                default_value="0.0 0.0 0.0",
-                description="TCP rotation from piper_link6.",
             ),
             DeclareLaunchArgument(
                 "piper_joint_limits_file",

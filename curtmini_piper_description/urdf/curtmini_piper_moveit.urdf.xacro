@@ -2,16 +2,11 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="curtmini_piper">
   <xacro:include filename="$(find agx_arm_urdf)/piper/urdf/piper_arm.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/hokuyo_utm_30lx_ew.xacro" />
+  <xacro:include filename="$(find curtmini_piper_description)/urdf/geometry.xacro" />
 
   <xacro:arg name="simulation" default="False" />
   <xacro:arg name="arm_prefix" default="piper_" />
-  <xacro:arg name="arm_mount_xyz" default="0 0 0.18" />
-  <xacro:arg name="arm_mount_rpy" default="0 0 0" />
-  <xacro:arg name="tcp_offset_xyz" default="0 0 0" />
-  <xacro:arg name="tcp_offset_rpy" default="0 0 0" />
   <xacro:arg name="use_hokuyo" default="False" />
-  <xacro:arg name="hokuyo_mount_xyz" default="0.25 0 0.20" />
-  <xacro:arg name="hokuyo_mount_rpy" default="0 0 0" />
   <xacro:arg
     name="piper_joint_limits_file"
     default="$(find agx_arm_urdf)/piper/config/joint_position_limits.yaml" />
@@ -107,21 +102,21 @@
   <joint name="$(arg arm_prefix)mount_joint" type="fixed">
     <parent link="chassis" />
     <child link="$(arg arm_prefix)base_link" />
-    <origin xyz="$(arg arm_mount_xyz)" rpy="$(arg arm_mount_rpy)" />
+    <origin xyz="${arm_mount_xyz}" rpy="${arm_mount_rpy}" />
   </joint>
 
   <link name="$(arg arm_prefix)tcp_link" />
   <joint name="$(arg arm_prefix)tcp_joint" type="fixed">
     <parent link="$(arg arm_prefix)link6" />
     <child link="$(arg arm_prefix)tcp_link" />
-    <origin xyz="$(arg tcp_offset_xyz)" rpy="$(arg tcp_offset_rpy)" />
+    <origin xyz="${tcp_offset_xyz}" rpy="${tcp_offset_rpy}" />
   </joint>
 
   <xacro:if value="$(arg use_hokuyo)">
     <xacro:hokuyo_utm_30lx_ew
       parent="chassis"
-      xyz="$(arg hokuyo_mount_xyz)"
-      rpy="$(arg hokuyo_mount_rpy)"
+      xyz="${hokuyo_mount_xyz}"
+      rpy="${hokuyo_mount_rpy}"
     />
   </xacro:if>
 </robot>

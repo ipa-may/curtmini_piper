@@ -35,5 +35,5 @@ ros2 run curtmini_piper_motion_examples moveit_goal --ros-args \
 ```
 
 The available `controller_mode` values are `simulation` and `hardware`.
-Mount and TCP offsets can be supplied through `arm_mount_xyz`,
-`arm_mount_rpy`, `tcp_offset_xyz`, and `tcp_offset_rpy`.
+Arm, TCP, and lidar mounts are read from
+`curtmini_piper_description/config/geometry.yaml`.

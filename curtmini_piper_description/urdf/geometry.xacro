@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property
+    name="geometry"
+    value="${xacro.load_yaml('$(find curtmini_piper_description)/config/geometry.yaml')}"
+  />
+
+  <xacro:property name="arm_mount_xyz" value="${geometry['arm_mount_on_base']['position']['x']} ${geometry['arm_mount_on_base']['position']['y']} ${geometry['arm_mount_on_base']['position']['z']}" />
+  <xacro:property name="arm_mount_rpy" value="${geometry['arm_mount_on_base']['rotation']['r']} ${geometry['arm_mount_on_base']['rotation']['p']} ${geometry['arm_mount_on_base']['rotation']['y']}" />
+  <xacro:property name="tcp_offset_xyz" value="${geometry['tcp_offset']['position']['x']} ${geometry['tcp_offset']['position']['y']} ${geometry['tcp_offset']['position']['z']}" />
+  <xacro:property name="tcp_offset_rpy" value="${geometry['tcp_offset']['rotation']['r']} ${geometry['tcp_offset']['rotation']['p']} ${geometry['tcp_offset']['rotation']['y']}" />
+  <xacro:property name="hokuyo_mount_xyz" value="${geometry['lidar_mount_on_base']['position']['x']} ${geometry['lidar_mount_on_base']['position']['y']} ${geometry['lidar_mount_on_base']['position']['z']}" />
+  <xacro:property name="hokuyo_mount_rpy" value="${geometry['lidar_mount_on_base']['rotation']['r']} ${geometry['lidar_mount_on_base']['rotation']['p']} ${geometry['lidar_mount_on_base']['rotation']['y']}" />
+</robot>

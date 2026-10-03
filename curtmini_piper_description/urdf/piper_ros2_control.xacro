@@ -6,8 +6,11 @@
       prefix
       system_name
       hardware_plugin
+      joint1_initial_value:=0.0
       joint2_initial_value:=0.0
       joint3_initial_value:=0.0
+      joint4_initial_value:=0.0
+      joint5_initial_value:=0.0
       joint6_initial_value:=0.0
     "
   >
@@ -29,7 +32,10 @@
         </joint>
       </xacro:macro>
 
-      <xacro:piper_control_joint joint_name="joint1" initial_value="0.0" />
+      <xacro:piper_control_joint
+        joint_name="joint1"
+        initial_value="${joint1_initial_value}"
+      />
       <xacro:piper_control_joint
         joint_name="joint2"
         initial_value="${joint2_initial_value}"
@@ -38,8 +44,14 @@
         joint_name="joint3"
         initial_value="${joint3_initial_value}"
       />
-      <xacro:piper_control_joint joint_name="joint4" initial_value="0.0" />
-      <xacro:piper_control_joint joint_name="joint5" initial_value="0.0" />
+      <xacro:piper_control_joint
+        joint_name="joint4"
+        initial_value="${joint4_initial_value}"
+      />
+      <xacro:piper_control_joint
+        joint_name="joint5"
+        initial_value="${joint5_initial_value}"
+      />
       <xacro:piper_control_joint
         joint_name="joint6"
         initial_value="${joint6_initial_value}"
