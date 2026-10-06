@@ -122,7 +122,7 @@ RUN source /opt/ws/install/setup.bash \
         /opt/ws/src/candle_ros2 \
         /opt/ws/src/openzenros2 \
         /opt/ws/src/curt_mini/ipa_ros2_control \
-        /opt/ws/src/curt_mini/curt_mini \
+        /opt/ws/src/curt_mini/curt_mini_bringup \
         /opt/ws/src/curt_mini/curt_mini_teleop \
         /opt/ws/src/curtmini_piper/curtmini_piper_bringup \
       --ignore-src --rosdistro "${ROS_DISTRO}" \

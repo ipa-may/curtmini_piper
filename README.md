@@ -18,8 +18,9 @@ This repository contains five ROS 2 packages:
   and execution examples for simulation and hardware.
 
 The prefix-aware Piper model and meshes come from `agx_arm_urdf`; the Curt Mini
-model lives in `curt_mini_description` and base controllers remain in `curt_mini`. This package owns only the
-mount and TCP joints that connect the two models.
+model lives in `curt_mini_description`, and base controllers remain in
+`curt_mini_bringup`. This package owns only the mount and TCP joints that
+connect the two models.
 
 ## Workspace setup
 
@@ -70,7 +71,7 @@ existing checkouts:
 vcs import --recursive --skip-existing src \
   < src/curt_mini/ipa_ros2_control/ipa_ros2_control.repos
 vcs import --recursive --skip-existing src \
-  < src/curt_mini/curt_mini/curt_mini.repos
+  < src/curt_mini/curt_mini_bringup/curt_mini.repos
 ```
 
 These manifests provide:

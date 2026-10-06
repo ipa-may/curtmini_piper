@@ -117,7 +117,7 @@ def _base_actions(context):
     if not _as_bool(context, "start_base"):
         return []
 
-    curt_share = Path(get_package_share_directory("curt_mini"))
+    curt_share = Path(get_package_share_directory("curt_mini_bringup"))
     ipa_share = Path(get_package_share_directory("ipa_ros2_control"))
 
     actions = [
