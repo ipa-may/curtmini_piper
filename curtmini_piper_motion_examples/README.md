@@ -14,6 +14,7 @@ Plan and execute in simulation:
 ```bash
 ros2 run curtmini_piper_motion_examples moveit_goal --ros-args \
   -p controller_mode:=simulation \
+  -p use_sim_time:=true \
   -p plan_only:=false
 ```
 
@@ -37,3 +38,7 @@ ros2 run curtmini_piper_motion_examples moveit_goal --ros-args \
 The available `controller_mode` values are `simulation` and `hardware`.
 Arm, TCP, and lidar mounts are read from
 `curtmini_piper_description/config/geometry.yaml`.
+
+`use_hokuyo` defaults to true in simulation mode and false in hardware mode.
+Override it with `-p use_hokuyo:=false` when the simulator lidar is disabled,
+so the client and backend use the same collision model.

@@ -1,0 +1,3 @@
+# Generated maps stay on the host, but are not committed automatically.
+*
+!.gitignore

@@ -12,10 +12,9 @@ This repository contains five ROS 2 packages:
   planning, perception, and RViz configuration.
 - `curtmini_piper_bringup`: Curt Mini hardware bringup, AGX Piper control,
   MoveIt runtime, and RViz.
-- `curtmini_piper_gz_sim`: Gazebo Harmonic simulation, simulated controllers,
-  sensor bridges, MoveIt runtime, and RViz.
 - `curtmini_piper_motion_examples`: controller-independent MoveItPy planning
   and execution examples for simulation and hardware.
+- `curtmini_piper_navigation`: simulation mapping, localization and goal navigation. See the [navigation guide](curtmini_piper_navigation/README.md).
 
 The prefix-aware Piper model and meshes come from `agx_arm_urdf`; the Curt Mini
 model lives in `curt_mini_description`, and base controllers remain in
@@ -59,7 +58,7 @@ rosdep update
 
 Add dependency repos:
 ```sh
-vcs import src \
+vcs import --recursive src \
   < src/curtmini_piper/dependencies.repos
 ```
 
@@ -113,14 +112,14 @@ From the workspace root:
 source /opt/ros/jazzy/setup.bash
 colcon build --packages-up-to \
   curtmini_piper_bringup \
-  curtmini_piper_gz_sim \
   curtmini_piper_motion_examples
 source install/setup.bash
 ```
 
 ## Simulation
 
-See github repo : [curtmini piper gz sim](https://github.com/ipa-may/curtmini_piper_gz_sim)
+Simulation lives in the separate [curtmini_piper_gz_sim repository](https://github.com/ipa-may/curtmini_piper_gz_sim).
+Clone that repository and follow its setup instructions to build and run simulation.
 
 
 ## Real robot
@@ -144,8 +143,9 @@ The defaults start the Curt Mini hardware, joystick, IMU, Piper on `can0`,
 MoveIt, and RViz. MoveIt uses prefixed names such as `piper_joint1`; a bridge
 translates these to the unprefixed names expected by `agx_arm_ctrl`.
 
-The AGX command interface starts gated off and is opened only while the
-trajectory action is active.
+The AGX command interface defaults to `control_enabled=true` and accepts
+commands continuously. Set `control_enabled:=false` to start the trajectory-status
+gate, which enables commands only while a trajectory action is active.
 
 MoveIt uses the original Curt Mini visual mesh and a simplified box collision
 for the chassis. The upstream 30 MB chassis STL remains in the full

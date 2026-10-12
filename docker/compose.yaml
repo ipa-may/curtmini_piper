@@ -68,7 +68,42 @@ x-keyboard-teleop: &keyboard-teleop
   environment:
     <<: *ros-environment
 
+x-navigation: &navigation
+  image: ${IMAGE_PREFIX:-curtmini-piper}-navigation:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+  build:
+    context: ..
+    additional_contexts:
+      container_common: ${CONTAINER_INFRA_SOURCE:-../../../../curtmini_piper_containers}/common
+    dockerfile: docker/Dockerfile
+    target: navigation
+    args:
+      <<: *build-args
+  network_mode: host
+  init: true
+  environment:
+    <<: *ros-environment
+  stop_grace_period: 10s
+
 services:
+  mapping-sim:
+    <<: *navigation
+    profiles: [mapping]
+    volumes:
+      - ../curtmini_piper_navigation/maps:/maps
+    command: [ros2, launch, curtmini_piper_navigation, mapping.launch.py]
+
+  nav2-sim:
+    <<: *navigation
+    profiles: [navigation]
+    volumes:
+      - ../curtmini_piper_navigation/maps:/maps:ro
+    command: [ros2, launch, curtmini_piper_navigation, navigation.launch.py, "map:=/maps/${NAV2_MAP:-map.yaml}"]
+
+  nav2-rviz-sim:
+    <<: *navigation
+    profiles: [navigation-tools]
+    command: [ros2, launch, curtmini_piper_navigation, rviz.launch.py]
+
   real-bringup:
     profiles: [hardware]
     image: ${IMAGE_PREFIX:-curtmini-piper}-hardware:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
@@ -151,6 +186,7 @@ services:
       - curtmini_piper_moveit_config
       - moveit_rviz.launch.py
       - use_sim_time:=true
+      - use_hokuyo:=${SIM_USE_HOKUYO:-true}
 
   moveit-rviz-hardware:
     <<: *moveit-rviz
@@ -183,6 +219,8 @@ services:
       - --ros-args
       - -p
       - controller_mode:=simulation
+      - -p
+      - use_hokuyo:=${SIM_USE_HOKUYO:-true}
       - -p
       - use_sim_time:=true
       - -p

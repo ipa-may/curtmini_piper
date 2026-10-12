@@ -50,6 +50,7 @@ class GoalConfig:
     velocity_scaling: float
     acceleration_scaling: float
     use_sim_time: bool
+    use_hokuyo: bool = False
 
 
 def _as_float_list(value, name: str) -> list[float]:
@@ -83,6 +84,7 @@ def build_moveit_config(config: GoalConfig) -> dict:
     mappings = {
         "simulation": "False",
         "arm_prefix": "piper_",
+        "use_hokuyo": str(config.use_hokuyo),
     }
     moveit_config = (
         MoveItConfigsBuilder(
@@ -144,6 +146,10 @@ def _read_config() -> GoalConfig:
         node.declare_parameter("goal_type", "joints")
         node.declare_parameter("controller_mode", "simulation")
         node.declare_parameter(
+            "use_hokuyo",
+            node.get_parameter("controller_mode").value == "simulation",
+        )
+        node.declare_parameter(
             "joint_positions", [0.0, 0.5, -0.7, 0.0, 0.8, 0.0]
         )
         node.declare_parameter("pose_position", [0.25, 0.0, 0.30])
@@ -193,6 +199,7 @@ def _read_config() -> GoalConfig:
                 node.get_parameter("acceleration_scaling").value
             ),
             use_sim_time=bool(node.get_parameter("use_sim_time").value),
+            use_hokuyo=bool(node.get_parameter("use_hokuyo").value),
         )
     finally:
         node.destroy_node()

@@ -3,7 +3,7 @@
 ARG ROS_DISTRO=jazzy
 ARG ROS_IMAGE=ros:${ROS_DISTRO}-ros-base-noble
 
-# Shared runtime foundation for all four images.
+# Shared runtime foundation for the robot images.
 FROM ${ROS_IMAGE} AS ros-base
 ARG ROS_DISTRO=jazzy
 ARG RMW=cyclonedds
@@ -40,6 +40,23 @@ RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" \
     && ros2 pkg prefix teleop_twist_keyboard \
     && ros2 pkg executables teleop_twist_keyboard \
       | grep -F "teleop_twist_keyboard teleop_twist_keyboard"
+
+# Navigation needs only binary ROS dependencies and this robot's configuration.
+FROM ros-base AS navigation-base
+COPY docker/navigation/ros-packages.txt /tmp/ros-packages.txt
+RUN apt-get update \
+    && sed "s|^|ros-${ROS_DISTRO}-|" /tmp/ros-packages.txt \
+      | xargs -r apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* /tmp/ros-packages.txt
+
+FROM navigation-base AS navigation-builder
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential cmake python3-colcon-common-extensions \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/ws
+COPY curtmini_piper_navigation /opt/ws/src/curtmini_piper_navigation
+RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" \
+    && colcon build --merge-install --packages-select curtmini_piper_navigation
 
 # Runtime dependencies shared by hardware, RViz and MoveItPy.
 FROM ros-base AS moveit-base
@@ -143,6 +160,13 @@ RUN source /opt/ws/install/setup.bash \
     && colcon test-result --verbose
 
 # Runtime images receive only installed artifacts from their build stages.
+FROM navigation-base AS navigation
+LABEL org.opencontainers.image.title="Curt Mini Piper Navigation"
+# RViz resolves mesh package URLs from the simulator's robot_description topic.
+COPY --from=robot-builder /opt/ws/install/ /opt/ws/install/
+COPY --from=navigation-builder /opt/ws/install/ /opt/ws/install/
+CMD ["ros2", "launch", "curtmini_piper_navigation", "navigation.launch.py"]
+
 FROM moveit-base AS moveit-rviz
 LABEL org.opencontainers.image.title="Curt Mini Piper MoveIt RViz"
 COPY docker/moveit-rviz/ros-packages.txt /tmp/ros-packages.txt

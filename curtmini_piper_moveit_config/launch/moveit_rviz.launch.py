@@ -34,6 +34,7 @@ def _launch_setup(context):
     mappings = {
         "simulation": "False",
         "arm_prefix": ARM_PREFIX,
+        "use_hokuyo": str(_as_bool(context, "use_hokuyo")),
         "piper_joint_limits_file": LaunchConfiguration(
             "piper_joint_limits_file"
         ).perform(context),
@@ -89,6 +90,12 @@ def generate_launch_description():
                 default_value="false",
                 choices=["true", "false"],
                 description="Use the simulation clock.",
+            ),
+            DeclareLaunchArgument(
+                "use_hokuyo",
+                default_value=LaunchConfiguration("use_sim_time"),
+                choices=["true", "false"],
+                description="Include the lidar; match the backend's use_hokuyo setting.",
             ),
             DeclareLaunchArgument(
                 "piper_joint_limits_file",
