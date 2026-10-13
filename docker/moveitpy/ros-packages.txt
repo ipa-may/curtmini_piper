@@ -1,3 +1,0 @@
-moveit-py
-moveit-simple-controller-manager
-robot-state-publisher

@@ -129,21 +129,6 @@ RUN source /opt/ws/install/setup.bash \
     && colcon test-result --verbose \
     && ros2 launch curtmini_piper_moveit_config moveit_rviz.launch.py --show-args
 
-FROM robot-builder AS moveitpy-builder
-RUN source /opt/ws/install/setup.bash \
-    && apt-get update \
-    && rosdep install \
-      --from-paths /opt/ws/src/curtmini_piper/curtmini_piper_motion_examples \
-      --ignore-src --rosdistro "${ROS_DISTRO}" --skip-keys "ament_python" -r -y \
-    && rm -rf /var/lib/apt/lists/*
-RUN source /opt/ws/install/setup.bash \
-    && colcon build --merge-install --packages-select curtmini_piper_motion_examples
-
-FROM moveitpy-builder AS moveitpy-test
-RUN source /opt/ws/install/setup.bash \
-    && colcon test --merge-install --packages-select curtmini_piper_motion_examples \
-    && colcon test-result --verbose
-
 FROM robot-builder AS hardware-builder
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -198,16 +183,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/ros-packages.txt
 COPY --from=robot-builder /opt/ws/install/ /opt/ws/install/
 CMD ["ros2", "launch", "curtmini_piper_moveit_config", "moveit_rviz.launch.py"]
-
-FROM moveit-base AS moveitpy
-LABEL org.opencontainers.image.title="Curt Mini Piper MoveItPy"
-COPY docker/moveitpy/ros-packages.txt /tmp/ros-packages.txt
-RUN apt-get update \
-    && sed "s|^|ros-${ROS_DISTRO}-|" /tmp/ros-packages.txt \
-      | xargs -r apt-get install -y --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/* /tmp/ros-packages.txt
-COPY --from=moveitpy-builder /opt/ws/install/ /opt/ws/install/
-CMD ["ros2", "run", "curtmini_piper_motion_examples", "moveit_goal"]
 
 FROM moveit-base AS hardware
 LABEL org.opencontainers.image.title="Curt Mini Piper Hardware"

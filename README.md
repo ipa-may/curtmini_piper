@@ -4,7 +4,7 @@
   <img src="doc/curtmini_piper_picture.png" alt="Curt Mini with Piper arm" width="300">
 </p>
 
-This repository contains six ROS 2 packages:
+This repository contains five ROS 2 packages:
 
 - `curtmini_piper_description`: the existing Curt Mini model combined with a
   Piper arm whose links and joints use the `piper_` prefix.
@@ -12,10 +12,11 @@ This repository contains six ROS 2 packages:
   planning, perception, and RViz configuration.
 - `curtmini_piper_bringup`: Curt Mini hardware bringup, AGX Piper control,
   MoveIt runtime, and RViz.
-- `curtmini_piper_motion_examples`: controller-independent MoveItPy planning
-  and execution examples for simulation and hardware.
 - `curtmini_piper_navigation`: simulation mapping, localization and goal navigation. See the [navigation guide](curtmini_piper_navigation/README.md).
 - `curtmini_piper_sensors`: physical RealSense camera launch and mount transforms. See the [sensor guide](curtmini_piper_sensors/README.md).
+
+Student-facing MoveItPy, AprilTag, and Nav2 clients live in the separate
+[`curtmini_piper_tools` repository](../curtmini_piper_tools/README.md).
 
 The prefix-aware Piper model and meshes come from `agx_arm_urdf`; the Curt Mini
 model lives in `curt_mini_description`, and base controllers remain in
@@ -112,8 +113,7 @@ From the workspace root:
 ```bash
 source /opt/ros/jazzy/setup.bash
 colcon build --packages-up-to \
-  curtmini_piper_bringup \
-  curtmini_piper_motion_examples
+  curtmini_piper_bringup
 source install/setup.bash
 ```
 
@@ -180,24 +180,9 @@ TCP offset arguments must match those passed to the bringup launch.
 
 ## MoveItPy
 
-Start the simulation or real robot bringup first. Planning is non-executing by
-default:
-
-```bash
-ros2 run curtmini_piper_motion_examples moveit_goal
-```
-
-Plan and execute in simulation:
-
-```bash
-ros2 run curtmini_piper_motion_examples moveit_goal --ros-args \
-  -p controller_mode:=simulation \
-  -p use_sim_time:=true \
-  -p plan_only:=false
-```
-
-For physical hardware, set `controller_mode:=hardware` and leave
-`use_sim_time:=false`. See the package README for joint and pose parameters.
+Start simulation or real robot bringup first. The example package now lives in
+[`curtmini_piper_tools`](../curtmini_piper_tools/curtmini_piper_motion_examples/README.md).
+Its ROS package and `moveit_goal` command keep the same names.
 
 ## Mount calibration
 

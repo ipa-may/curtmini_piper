@@ -59,23 +59,6 @@ x-moveit-rviz: &moveit-rviz
   volumes:
     - *geometry-config
 
-x-moveitpy: &moveitpy
-  image: ${IMAGE_PREFIX:-curtmini-piper}-moveitpy:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
-  build:
-    context: https://github.com/ipa-may/curtmini_piper.git#main
-    additional_contexts:
-      container_common: ${CONTAINER_INFRA_SOURCE:-../../../../curtmini_piper_containers}/common
-    dockerfile: docker/Dockerfile
-    target: moveitpy
-    args:
-      <<: *build-args
-  network_mode: host
-  init: true
-  environment:
-    <<: *ros-environment
-  volumes:
-    - *geometry-config
-
 x-keyboard-teleop: &keyboard-teleop
   image: ${IMAGE_PREFIX:-curtmini-piper}-teleop:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
   build:
@@ -249,50 +232,6 @@ services:
       - curtmini_piper_moveit_config
       - moveit_rviz.launch.py
       - use_sim_time:=false
-
-  moveitpy-sim:
-    <<: *moveitpy
-    profiles: [simulation-tools]
-    command:
-      - /opt/container/wait_for_ros.sh
-      - topic
-      - /joint_states
-      - "120"
-      - --
-      - ros2
-      - run
-      - curtmini_piper_motion_examples
-      - moveit_goal
-      - --ros-args
-      - -p
-      - controller_mode:=simulation
-      - -p
-      - use_hokuyo:=${SIM_USE_HOKUYO:-true}
-      - -p
-      - use_sim_time:=true
-      - -p
-      - plan_only:=${MOVEIT_PLAN_ONLY:-true}
-
-  moveitpy-hardware:
-    <<: *moveitpy
-    profiles: [hardware-tools]
-    command:
-      - /opt/container/wait_for_ros.sh
-      - topic
-      - /joint_states
-      - "120"
-      - --
-      - ros2
-      - run
-      - curtmini_piper_motion_examples
-      - moveit_goal
-      - --ros-args
-      - -p
-      - controller_mode:=hardware
-      - -p
-      - use_sim_time:=false
-      - -p
-      - plan_only:=${MOVEIT_PLAN_ONLY:-true}
 
   keyboard-teleop-sim:
     <<: *keyboard-teleop
