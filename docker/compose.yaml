@@ -17,6 +17,31 @@ x-geometry-config: &geometry-config
   bind:
     create_host_path: false
 
+x-sensors: &sensors
+  image: ${IMAGE_PREFIX:-curtmini-piper}-sensors:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+  build:
+    context: ..
+    additional_contexts:
+      container_common: ${CONTAINER_INFRA_SOURCE:-../../../../curtmini_piper_containers}/common
+    dockerfile: docker/Dockerfile
+    target: sensors
+    args:
+      <<: *build-args
+  network_mode: host
+  init: true
+  environment:
+    <<: *ros-environment
+  volumes:
+    - /dev/bus/usb:/dev/bus/usb
+    - type: bind
+      source: ../curtmini_piper_sensors/config
+      target: /opt/ws/install/share/curtmini_piper_sensors/config
+      read_only: true
+      bind:
+        create_host_path: false
+  device_cgroup_rules:
+    - "c 189:* rmw"
+
 x-moveit-rviz: &moveit-rviz
   image: ${IMAGE_PREFIX:-curtmini-piper}-moveit-rviz:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
   build:
@@ -85,6 +110,28 @@ x-navigation: &navigation
   stop_grace_period: 10s
 
 services:
+  realsense-base:
+    <<: *sensors
+    profiles: [hardware-cameras]
+    command:
+      - ros2
+      - launch
+      - curtmini_piper_sensors
+      - realsense_camera.launch.py
+      - camera:=base_camera
+      - serial_no:=${BASE_CAMERA_SERIAL:-}
+
+  realsense-tool:
+    <<: *sensors
+    profiles: [hardware-cameras]
+    command:
+      - ros2
+      - launch
+      - curtmini_piper_sensors
+      - realsense_camera.launch.py
+      - camera:=tool_camera
+      - serial_no:=${TOOL_CAMERA_SERIAL:-}
+
   mapping-sim:
     <<: *navigation
     profiles: [mapping]

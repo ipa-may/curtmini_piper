@@ -1,9 +1,17 @@
 arm_mount_on_base:
-  position: { x: 0.0, y: 0.0, z: 0.18 }
+  position: { x: 0.3, y: 0.0, z: 0.18 }
   rotation: { r: 0.0, p: 0.0, y: 0.0 }
 tcp_offset:
   position: { x: 0.0, y: 0.0, z: 0.0 }
   rotation: { r: 0.0, p: 0.0, y: 0.0 }
 lidar_mount_on_base:
   position: { x: 0.25, y: 0.0, z: 0.25 }
+  rotation: { r: 0.0, p: 0.0, y: 0.0 }
+# Nominal camera body origins. Match the static TFs and Gazebo sensor poses.
+# Replace the hardware values in curtmini_piper_sensors/config after measuring.
+base_camera_mount:
+  position: { x: 0.32, y: 0.0, z: 0.15 }
+  rotation: { r: 0.0, p: 0.0, y: 0.0 }
+tool_camera_mount:
+  position: { x: 0.0, y: 0.0, z: 0.08 }
   rotation: { r: 0.0, p: 0.0, y: 0.0 }

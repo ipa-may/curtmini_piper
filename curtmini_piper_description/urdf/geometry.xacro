@@ -11,4 +11,8 @@
   <xacro:property name="tcp_offset_rpy" value="${geometry['tcp_offset']['rotation']['r']} ${geometry['tcp_offset']['rotation']['p']} ${geometry['tcp_offset']['rotation']['y']}" />
   <xacro:property name="hokuyo_mount_xyz" value="${geometry['lidar_mount_on_base']['position']['x']} ${geometry['lidar_mount_on_base']['position']['y']} ${geometry['lidar_mount_on_base']['position']['z']}" />
   <xacro:property name="hokuyo_mount_rpy" value="${geometry['lidar_mount_on_base']['rotation']['r']} ${geometry['lidar_mount_on_base']['rotation']['p']} ${geometry['lidar_mount_on_base']['rotation']['y']}" />
+  <xacro:property name="base_camera_mount_xyz" value="${geometry['base_camera_mount']['position']['x']} ${geometry['base_camera_mount']['position']['y']} ${geometry['base_camera_mount']['position']['z']}" />
+  <xacro:property name="base_camera_mount_rpy" value="${geometry['base_camera_mount']['rotation']['r']} ${geometry['base_camera_mount']['rotation']['p']} ${geometry['base_camera_mount']['rotation']['y']}" />
+  <xacro:property name="tool_camera_mount_xyz" value="${geometry['tool_camera_mount']['position']['x']} ${geometry['tool_camera_mount']['position']['y']} ${geometry['tool_camera_mount']['position']['z']}" />
+  <xacro:property name="tool_camera_mount_rpy" value="${geometry['tool_camera_mount']['rotation']['r']} ${geometry['tool_camera_mount']['rotation']['p']} ${geometry['tool_camera_mount']['rotation']['y']}" />
 </robot>

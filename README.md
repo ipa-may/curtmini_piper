@@ -4,7 +4,7 @@
   <img src="doc/curtmini_piper_picture.png" alt="Curt Mini with Piper arm" width="300">
 </p>
 
-This repository contains five ROS 2 packages:
+This repository contains six ROS 2 packages:
 
 - `curtmini_piper_description`: the existing Curt Mini model combined with a
   Piper arm whose links and joints use the `piper_` prefix.
@@ -15,6 +15,7 @@ This repository contains five ROS 2 packages:
 - `curtmini_piper_motion_examples`: controller-independent MoveItPy planning
   and execution examples for simulation and hardware.
 - `curtmini_piper_navigation`: simulation mapping, localization and goal navigation. See the [navigation guide](curtmini_piper_navigation/README.md).
+- `curtmini_piper_sensors`: physical RealSense camera launch and mount transforms. See the [sensor guide](curtmini_piper_sensors/README.md).
 
 The prefix-aware Piper model and meshes come from `agx_arm_urdf`; the Curt Mini
 model lives in `curt_mini_description`, and base controllers remain in

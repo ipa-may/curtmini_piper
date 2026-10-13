@@ -5,6 +5,7 @@
   <xacro:include filename="$(find agx_arm_urdf)/piper/urdf/piper_arm.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_ros2_control.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/hokuyo_utm_30lx_ew.xacro" />
+  <xacro:include filename="$(find curtmini_piper_description)/urdf/d435i_body.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/geometry.xacro" />
 
   <xacro:arg name="arm_prefix" default="piper_" />
@@ -35,6 +36,11 @@
     <child link="$(arg arm_prefix)tcp_link" />
     <origin xyz="${tcp_offset_xyz}" rpy="${tcp_offset_rpy}" />
   </joint>
+
+  <xacro:d435i_body name="base_camera" parent="chassis"
+    xyz="${base_camera_mount_xyz}" rpy="${base_camera_mount_rpy}" />
+  <xacro:d435i_body name="tool_camera" parent="$(arg arm_prefix)tcp_link"
+    xyz="${tool_camera_mount_xyz}" rpy="${tool_camera_mount_rpy}" />
 
   <xacro:if value="$(arg use_hokuyo)">
     <xacro:hokuyo_utm_30lx_ew

@@ -41,6 +41,28 @@ RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" \
     && ros2 pkg executables teleop_twist_keyboard \
       | grep -F "teleop_twist_keyboard teleop_twist_keyboard"
 
+# Two physical cameras use one small image, independent of robot bringup.
+FROM ros-base AS sensors-deps
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      python3-yaml "ros-${ROS_DISTRO}-realsense2-camera" "ros-${ROS_DISTRO}-tf2-ros" \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM sensors-deps AS sensors-builder
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      build-essential cmake python3-colcon-common-extensions "ros-${ROS_DISTRO}-ament-cmake" \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/ws
+COPY curtmini_piper_sensors /opt/ws/src/curtmini_piper_sensors
+RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" \
+    && colcon build --merge-install --packages-select curtmini_piper_sensors
+
+FROM sensors-deps AS sensors
+LABEL org.opencontainers.image.title="Curt Mini Piper RealSense Sensors"
+COPY --from=sensors-builder /opt/ws/install/ /opt/ws/install/
+CMD ["ros2", "launch", "curtmini_piper_sensors", "realsense_camera.launch.py"]
+
 # Navigation needs only binary ROS dependencies and this robot's configuration.
 FROM ros-base AS navigation-base
 COPY docker/navigation/ros-packages.txt /tmp/ros-packages.txt

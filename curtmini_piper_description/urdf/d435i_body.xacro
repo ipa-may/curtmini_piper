@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- A simple D435i envelope. Measurement frames are published separately. -->
+  <xacro:macro name="d435i_body" params="name parent xyz rpy">
+    <link name="${name}_body_link">
+      <inertial>
+        <mass value="0.072" />
+        <inertia ixx="0.000008" ixy="0" ixz="0" iyy="0.00007" iyz="0" izz="0.000075" />
+      </inertial>
+      <visual>
+        <geometry><box size="0.025 0.090 0.025" /></geometry>
+        <material name="d435i_dark"><color rgba="0.12 0.12 0.12 1" /></material>
+      </visual>
+      <collision>
+        <geometry><box size="0.025 0.090 0.025" /></geometry>
+      </collision>
+    </link>
+    <joint name="${name}_body_joint" type="fixed">
+      <parent link="${parent}" />
+      <child link="${name}_body_link" />
+      <origin xyz="${xyz}" rpy="${rpy}" />
+    </joint>
+  </xacro:macro>
+</robot>
