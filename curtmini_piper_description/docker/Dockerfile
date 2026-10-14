@@ -36,7 +36,7 @@ FROM builder AS test
 RUN source /opt/ws/install/setup.bash \
     && colcon test --merge-install --packages-select curtmini_piper_description \
     && colcon test-result --verbose \
-    && xacro /opt/ws/install/share/curtmini_piper_description/urdf/curtmini_piper_moveit.urdf.xacro -o /tmp/robot.urdf
+    && xacro /opt/ws/install/share/curtmini_piper_description/urdf/curtmini_piper.urdf.xacro -o /tmp/robot.urdf
 
 FROM dependencies AS runtime
 LABEL org.opencontainers.image.title="Curt Mini Piper Description"

@@ -19,6 +19,17 @@ from moveit_configs_utils import MoveItConfigsBuilder
 
 ARM_PREFIX = "piper_"
 ARM_NAMESPACE = "piper"
+GRIPPER_MODELS = ("piper_h", "piper_l")
+
+
+def _arm_model(context):
+    return LaunchConfiguration("arm_model").perform(context)
+
+
+def _moveit_package(model):
+    if model in GRIPPER_MODELS:
+        return f"curtmini_{model}_gripper_moveit_config"
+    return "curtmini_piper_moveit_config"
 
 
 def _default_piper_joint_limits_file():
@@ -42,7 +53,7 @@ def _float_array_literal(values):
     return str(float_values)
 
 
-def _tcp_offset_literal():
+def _tcp_offset_literal(model):
     geometry_file = (
         Path(get_package_share_directory("curtmini_piper_description"))
         / "config" / "geometry.yaml"
@@ -50,15 +61,21 @@ def _tcp_offset_literal():
     with geometry_file.open(encoding="utf-8") as stream:
         tcp = yaml.safe_load(stream)["tcp_offset"]
     values = [tcp["position"][axis] for axis in ("x", "y", "z")]
+    if model in GRIPPER_MODELS:
+        values[2] += 0.1425
     values += [tcp["rotation"][axis] for axis in ("r", "p", "y")]
     return _float_array_literal(values)
 
 
 def _build_moveit_config(context):
+    model = _arm_model(context)
     description_share = Path(
         get_package_share_directory("curtmini_piper_description")
     )
     moveit_share = Path(
+        get_package_share_directory(_moveit_package(model))
+    )
+    shared_moveit_share = Path(
         get_package_share_directory("curtmini_piper_moveit_config")
     )
     piper_joint_limits_file = LaunchConfiguration(
@@ -68,14 +85,12 @@ def _build_moveit_config(context):
     mappings = {
         "simulation": "False",
         "arm_prefix": ARM_PREFIX,
+        "arm_model": model,
         "piper_joint_limits_file": piper_joint_limits_file,
     }
 
     full_description_file = (
         description_share / "urdf" / "curtmini_piper.urdf.xacro"
-    )
-    moveit_description_file = (
-        description_share / "urdf" / "curtmini_piper_moveit.urdf.xacro"
     )
     full_robot_description = xacro.process_file(
         str(full_description_file), mappings=mappings
@@ -84,10 +99,10 @@ def _build_moveit_config(context):
     moveit_config = (
         MoveItConfigsBuilder(
             "curtmini_piper",
-            package_name="curtmini_piper_moveit_config",
+            package_name=_moveit_package(model),
         )
         .robot_description(
-            file_path=str(moveit_description_file),
+            file_path=str(full_description_file),
             mappings=mappings,
         )
         .robot_description_semantic(
@@ -95,7 +110,9 @@ def _build_moveit_config(context):
         )
         .robot_description_kinematics(file_path="config/kinematics.yaml")
         .joint_limits(file_path="config/joint_limits.yaml")
-        .sensors_3d(file_path="config/sensors_3d.yaml")
+        .sensors_3d(
+            file_path=str(shared_moveit_share / "config" / "sensors_3d.yaml")
+        )
         .trajectory_execution(
             file_path=str(
                 moveit_share / "config" / "moveit_controllers_real.yaml"
@@ -107,6 +124,8 @@ def _build_moveit_config(context):
 
 
 def _arm_actions(context):
+    model = _arm_model(context)
+    has_gripper = model in GRIPPER_MODELS
     description_share = Path(
         get_package_share_directory("curtmini_piper_description")
     )
@@ -125,6 +144,7 @@ def _arm_actions(context):
                     / "piper_arm_control.urdf.xacro"
                 ),
                 f" arm_prefix:={ARM_PREFIX}",
+                f" arm_model:={model}",
                 " piper_joint_limits_file:=",
                 LaunchConfiguration("piper_joint_limits_file"),
             ]
@@ -155,7 +175,10 @@ def _arm_actions(context):
                 str(
                     bringup_share
                     / "config"
-                    / "piper_ros2_controllers.yaml"
+                    / (
+                        "piper_gripper_ros2_controllers.yaml"
+                        if has_gripper else "piper_ros2_controllers.yaml"
+                    )
                 ),
             ],
         ),
@@ -187,10 +210,26 @@ def _arm_actions(context):
         ),
     ]
 
+    if has_gripper:
+        actions.append(
+            Node(
+                package="controller_manager",
+                executable="spawner",
+                output="screen",
+                arguments=[
+                    "gripper_controller",
+                    "--controller-manager",
+                    f"/{ARM_NAMESPACE}/controller_manager",
+                    "--controller-manager-timeout",
+                    "60",
+                ],
+            )
+        )
+
     if not use_hardware:
         return actions
 
-    tcp_offset = _tcp_offset_literal()
+    tcp_offset = _tcp_offset_literal(model)
     agx_ctrl_share = Path(get_package_share_directory("agx_arm_ctrl"))
 
     actions.extend(
@@ -206,8 +245,8 @@ def _arm_actions(context):
                 launch_arguments={
                     "namespace": ARM_NAMESPACE,
                     "can_port": LaunchConfiguration("can_port"),
-                    "arm_type": "piper",
-                    "effector_type": "none",
+                    "arm_type": model,
+                    "effector_type": "agx_gripper" if has_gripper else "none",
                     "auto_enable": LaunchConfiguration("auto_enable_arm"),
                     "speed_percent": LaunchConfiguration(
                         "arm_speed_percent"
@@ -252,8 +291,9 @@ def _arm_actions(context):
 
 
 def _launch_setup(context):
+    model = _arm_model(context)
     moveit_config, full_robot_description = _build_moveit_config(context)
-    moveit_share = Path(
+    shared_moveit_share = Path(
         get_package_share_directory("curtmini_piper_moveit_config")
     )
 
@@ -268,13 +308,14 @@ def _launch_setup(context):
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                str(moveit_share / "launch" / "move_group.launch.py")
+                str(shared_moveit_share / "launch" / "move_group.launch.py")
             ),
             launch_arguments={
                 "controller_mode": "real",
                 "use_sim_time": "false",
                 "use_hokuyo": "false",
                 "use_sensors_3d": "true",
+                "arm_model": model,
                 "piper_joint_limits_file": LaunchConfiguration(
                     "piper_joint_limits_file"
                 ),
@@ -292,7 +333,7 @@ def _launch_setup(context):
                 output="log",
                 arguments=[
                     "-d",
-                    str(moveit_share / "config" / "moveit.rviz"),
+                    str(shared_moveit_share / "config" / "moveit.rviz"),
                 ],
                 parameters=[
                     moveit_config.robot_description,
@@ -311,6 +352,12 @@ def _launch_setup(context):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                "arm_model",
+                default_value="piper",
+                choices=["piper", "piper_h", "piper_l"],
+                description="Arm model mounted on Curt Mini.",
+            ),
             DeclareLaunchArgument(
                 "start_arm_hardware",
                 default_value="true",

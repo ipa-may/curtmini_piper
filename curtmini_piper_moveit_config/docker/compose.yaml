@@ -81,3 +81,4 @@ services:
       - curtmini_piper_moveit_config
       - moveit_rviz.launch.py
       - use_sim_time:=false
+      - arm_model:=${ARM_MODEL:-piper}

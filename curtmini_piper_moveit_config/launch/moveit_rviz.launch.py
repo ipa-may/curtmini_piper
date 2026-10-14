@@ -25,6 +25,11 @@ def _as_bool(context, name):
 
 
 def _launch_setup(context):
+    model = LaunchConfiguration("arm_model").perform(context)
+    config_package = (
+        f"curtmini_{model}_gripper_moveit_config"
+        if model != "piper" else "curtmini_piper_moveit_config"
+    )
     description_share = Path(
         get_package_share_directory("curtmini_piper_description")
     )
@@ -34,6 +39,7 @@ def _launch_setup(context):
     mappings = {
         "simulation": "False",
         "arm_prefix": ARM_PREFIX,
+        "arm_model": model,
         "use_hokuyo": str(_as_bool(context, "use_hokuyo")),
         "piper_joint_limits_file": LaunchConfiguration(
             "piper_joint_limits_file"
@@ -42,13 +48,13 @@ def _launch_setup(context):
     moveit_config = (
         MoveItConfigsBuilder(
             "curtmini_piper",
-            package_name="curtmini_piper_moveit_config",
+            package_name=config_package,
         )
         .robot_description(
             file_path=str(
                 description_share
                 / "urdf"
-                / "curtmini_piper_moveit.urdf.xacro"
+                / "curtmini_piper.urdf.xacro"
             ),
             mappings=mappings,
         )
@@ -85,6 +91,11 @@ def _launch_setup(context):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                "arm_model",
+                default_value="piper",
+                choices=["piper", "piper_h", "piper_l"],
+            ),
             DeclareLaunchArgument(
                 "use_sim_time",
                 default_value="false",

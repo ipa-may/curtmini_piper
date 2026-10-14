@@ -88,6 +88,7 @@ services:
       - launch
       - curtmini_piper_bringup
       - bringup.launch.py
+      - arm_model:=${ARM_MODEL:-piper}
       - can_port:=${CAN_PORT:-can0}
       - start_arm_hardware:=true
       - use_rviz:=false

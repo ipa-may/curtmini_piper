@@ -25,17 +25,25 @@ def _as_bool(context, name):
 
 
 def _launch_setup(context):
+    model = LaunchConfiguration("arm_model").perform(context)
     description_share = Path(
         get_package_share_directory("curtmini_piper_description")
     )
+    config_package = (
+        f"curtmini_{model}_gripper_moveit_config"
+        if model != "piper" else "curtmini_piper_moveit_config"
+    )
     config_share = Path(
-        get_package_share_directory("curtmini_piper_moveit_config")
+        get_package_share_directory(config_package)
     )
     controller_mode = LaunchConfiguration("controller_mode").perform(context)
+    if model != "piper" and controller_mode == "sim":
+        raise RuntimeError("Gazebo controllers are not configured for Piper H/L yet")
     controller_file = config_share / "config" / f"moveit_controllers_{controller_mode}.yaml"
     mappings = {
         "simulation": "False",
         "arm_prefix": "piper_",
+        "arm_model": model,
         "use_hokuyo": str(_as_bool(context, "use_hokuyo")),
         "piper_joint_limits_file": LaunchConfiguration(
             "piper_joint_limits_file"
@@ -44,11 +52,11 @@ def _launch_setup(context):
     builder = (
         MoveItConfigsBuilder(
             "curtmini_piper",
-            package_name="curtmini_piper_moveit_config",
+            package_name=config_package,
         )
         .robot_description(
             file_path=str(
-                description_share / "urdf" / "curtmini_piper_moveit.urdf.xacro"
+                description_share / "urdf" / "curtmini_piper.urdf.xacro"
             ),
             mappings=mappings,
         )
@@ -58,7 +66,12 @@ def _launch_setup(context):
         .trajectory_execution(file_path=str(controller_file))
     )
     if _as_bool(context, "use_sensors_3d"):
-        builder.sensors_3d(file_path="config/sensors_3d.yaml")
+        builder.sensors_3d(
+            file_path=str(
+                Path(get_package_share_directory("curtmini_piper_moveit_config"))
+                / "config" / "sensors_3d.yaml"
+            )
+        )
     moveit_config = builder.to_moveit_configs()
     if not _as_bool(context, "use_sensors_3d"):
         moveit_config.sensors_3d = {}
@@ -90,6 +103,11 @@ def _launch_setup(context):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                "arm_model",
+                default_value="piper",
+                choices=["piper", "piper_h", "piper_l"],
+            ),
             DeclareLaunchArgument(
                 "controller_mode",
                 default_value="real",

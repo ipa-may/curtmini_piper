@@ -3,12 +3,15 @@
   <!-- Reuse the complete Curt Mini model, including its ros2_control block. -->
   <xacro:include filename="$(find curt_mini_description)/models/curt_mini/robot.urdf.xacro" />
   <xacro:include filename="$(find agx_arm_urdf)/piper/urdf/piper_arm.xacro" />
+  <xacro:include filename="$(find agx_arm_urdf)/piper_h/urdf/piper_h_with_gripper.xacro" />
+  <xacro:include filename="$(find agx_arm_urdf)/piper_l/urdf/piper_l_with_gripper.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_ros2_control.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/hokuyo_utm_30lx_ew.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/d435i_body.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/geometry.xacro" />
 
   <xacro:arg name="arm_prefix" default="piper_" />
+  <xacro:arg name="arm_model" default="piper" />
   <xacro:arg name="use_hokuyo" default="False" />
   <xacro:arg name="piper_joint1_initial_value" default="0.0" />
   <xacro:arg name="piper_joint2_initial_value" default="0.1" />
@@ -20,9 +23,17 @@
     name="piper_joint_limits_file"
     default="$(find agx_arm_urdf)/piper/config/joint_position_limits.yaml" />
 
-  <xacro:piper_arm
-    prefix="$(arg arm_prefix)"
-    joint_limits_file="$(arg piper_joint_limits_file)" />
+  <xacro:if value="$(eval arm_model == 'piper')">
+    <xacro:piper_arm
+      prefix="$(arg arm_prefix)"
+      joint_limits_file="$(arg piper_joint_limits_file)" />
+  </xacro:if>
+  <xacro:if value="$(eval arm_model == 'piper_h')">
+    <xacro:piper_h_with_gripper prefix="$(arg arm_prefix)" />
+  </xacro:if>
+  <xacro:if value="$(eval arm_model == 'piper_l')">
+    <xacro:piper_l_with_gripper prefix="$(arg arm_prefix)" />
+  </xacro:if>
 
   <joint name="$(arg arm_prefix)mount_joint" type="fixed">
     <parent link="chassis" />
@@ -31,11 +42,20 @@
   </joint>
 
   <link name="$(arg arm_prefix)tcp_link" />
-  <joint name="$(arg arm_prefix)tcp_joint" type="fixed">
-    <parent link="$(arg arm_prefix)link6" />
-    <child link="$(arg arm_prefix)tcp_link" />
-    <origin xyz="${tcp_offset_xyz}" rpy="${tcp_offset_rpy}" />
-  </joint>
+  <xacro:if value="$(eval arm_model == 'piper')">
+    <joint name="$(arg arm_prefix)tcp_joint" type="fixed">
+      <parent link="$(arg arm_prefix)link6" />
+      <child link="$(arg arm_prefix)tcp_link" />
+      <origin xyz="${tcp_offset_xyz}" rpy="${tcp_offset_rpy}" />
+    </joint>
+  </xacro:if>
+  <xacro:unless value="$(eval arm_model == 'piper')">
+    <joint name="$(arg arm_prefix)tcp_joint" type="fixed">
+      <parent link="$(arg arm_prefix)gripper_tcp" />
+      <child link="$(arg arm_prefix)tcp_link" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+  </xacro:unless>
 
   <xacro:d435i_body name="base_camera" parent="chassis"
     xyz="${base_camera_mount_xyz}" rpy="${base_camera_mount_rpy}" />
@@ -61,6 +81,7 @@
       joint4_initial_value="$(arg piper_joint4_initial_value)"
       joint5_initial_value="$(arg piper_joint5_initial_value)"
       joint6_initial_value="$(arg piper_joint6_initial_value)"
+      with_gripper="$(eval arm_model != 'piper')"
     />
   </xacro:if>
 </robot>

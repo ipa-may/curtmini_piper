@@ -4,7 +4,7 @@ project(curtmini_piper_description)
 find_package(ament_cmake REQUIRED)
 
 install(
-  DIRECTORY config urdf
+  DIRECTORY config launch rviz urdf
   DESTINATION share/${PROJECT_NAME}
 )
 

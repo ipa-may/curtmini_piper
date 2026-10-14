@@ -13,6 +13,8 @@
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>curtmini_piper_description</exec_depend>
+  <exec_depend>curtmini_piper_h_gripper_moveit_config</exec_depend>
+  <exec_depend>curtmini_piper_l_gripper_moveit_config</exec_depend>
   <exec_depend>joint_state_broadcaster</exec_depend>
   <exec_depend>joint_trajectory_controller</exec_depend>
   <exec_depend>launch</exec_depend>

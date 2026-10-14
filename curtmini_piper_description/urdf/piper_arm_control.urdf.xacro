@@ -1,17 +1,28 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="prefixed_piper_control">
   <xacro:include filename="$(find agx_arm_urdf)/piper/urdf/piper_arm.xacro" />
+  <xacro:include filename="$(find agx_arm_urdf)/piper_h/urdf/piper_h_with_gripper.xacro" />
+  <xacro:include filename="$(find agx_arm_urdf)/piper_l/urdf/piper_l_with_gripper.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_ros2_control.xacro" />
 
   <xacro:arg name="arm_prefix" default="piper_" />
+  <xacro:arg name="arm_model" default="piper" />
   <xacro:arg
     name="piper_joint_limits_file"
     default="$(find agx_arm_urdf)/piper/config/joint_position_limits.yaml" />
 
   <link name="$(arg arm_prefix)world" />
-  <xacro:piper_arm
-    prefix="$(arg arm_prefix)"
-    joint_limits_file="$(arg piper_joint_limits_file)" />
+  <xacro:if value="$(eval arm_model == 'piper')">
+    <xacro:piper_arm
+      prefix="$(arg arm_prefix)"
+      joint_limits_file="$(arg piper_joint_limits_file)" />
+  </xacro:if>
+  <xacro:if value="$(eval arm_model == 'piper_h')">
+    <xacro:piper_h_with_gripper prefix="$(arg arm_prefix)" />
+  </xacro:if>
+  <xacro:if value="$(eval arm_model == 'piper_l')">
+    <xacro:piper_l_with_gripper prefix="$(arg arm_prefix)" />
+  </xacro:if>
 
   <joint name="$(arg arm_prefix)mount_joint" type="fixed">
     <parent link="$(arg arm_prefix)world" />
@@ -20,15 +31,25 @@
   </joint>
 
   <link name="$(arg arm_prefix)tcp_link" />
-  <joint name="$(arg arm_prefix)tcp_joint" type="fixed">
-    <parent link="$(arg arm_prefix)link6" />
-    <child link="$(arg arm_prefix)tcp_link" />
-    <origin xyz="0 0 0" rpy="0 0 0" />
-  </joint>
+  <xacro:if value="$(eval arm_model == 'piper')">
+    <joint name="$(arg arm_prefix)tcp_joint" type="fixed">
+      <parent link="$(arg arm_prefix)link6" />
+      <child link="$(arg arm_prefix)tcp_link" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+  </xacro:if>
+  <xacro:unless value="$(eval arm_model == 'piper')">
+    <joint name="$(arg arm_prefix)tcp_joint" type="fixed">
+      <parent link="$(arg arm_prefix)gripper_tcp" />
+      <child link="$(arg arm_prefix)tcp_link" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+  </xacro:unless>
 
   <xacro:piper_ros2_control
     prefix="$(arg arm_prefix)"
     system_name="FakeSystem"
     hardware_plugin="mock_components/GenericSystem"
+    with_gripper="$(eval arm_model != 'piper')"
   />
 </robot>

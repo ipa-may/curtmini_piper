@@ -12,6 +12,7 @@
       joint4_initial_value:=0.0
       joint5_initial_value:=0.0
       joint6_initial_value:=0.0
+      with_gripper:=false
     "
   >
     <ros2_control name="${prefix}${system_name}" type="system">
@@ -56,6 +57,9 @@
         joint_name="joint6"
         initial_value="${joint6_initial_value}"
       />
+      <xacro:if value="${with_gripper}">
+        <xacro:piper_control_joint joint_name="gripper" initial_value="0.0" />
+      </xacro:if>
     </ros2_control>
   </xacro:macro>
 </robot>
