@@ -10,8 +10,8 @@ This repository contains five ROS 2 packages:
   Piper arm whose links and joints use the `piper_` prefix.
 - `curtmini_piper_moveit_config`: shared SRDF, kinematics, joint limits,
   planning, perception, and RViz configuration.
-- `curtmini_piper_bringup`: Curt Mini hardware bringup, AGX Piper control,
-  MoveIt runtime, and RViz.
+- `curtmini_piper_bringup`: Piper arm control, the combined robot model,
+  MoveIt runtime, and RViz. Base hardware remains in `curt_mini_bringup`.
 - `curtmini_piper_navigation`: simulation mapping, localization and goal navigation. See the [navigation guide](curtmini_piper_navigation/README.md).
 - `curtmini_piper_sensors`: physical RealSense camera launch and mount transforms. See the [sensor guide](curtmini_piper_sensors/README.md).
 
@@ -58,28 +58,23 @@ An `already initialized` message can be ignored. Update the rosdep database:
 rosdep update
 ```
 
-Add dependency repos:
+For the Piper arm and MoveIt, import the arm dependencies:
 ```sh
 vcs import --recursive src \
-  < src/curtmini_piper/dependencies.repos
+  < src/curtmini_piper/docker/dependencies/arm.repos
 ```
 
-Import the source dependencies pinned by the Curt Mini packages. The
-`--skip-existing` option makes these commands safe to repeat without replacing
-existing checkouts:
+To run the mobile base too, import its separate dependencies. The
+`--skip-existing` option leaves the shared `curt_mini` checkout in place:
 
 ```sh
 vcs import --recursive --skip-existing src \
-  < src/curt_mini/ipa_ros2_control/ipa_ros2_control.repos
-vcs import --recursive --skip-existing src \
-  < src/curt_mini/curt_mini_bringup/curt_mini.repos
+  < src/curtmini_piper/docker/dependencies/base.repos
 ```
 
-These manifests provide:
-
-- The `agx_arm_ros` and `agx_arm_urdf` forks used by this integration.
-- `candle_ros2` v2.1.2, required by the Curt Mini hardware interface.
-- `openzen_driver`, required by the Curt Mini IMU launch.
+The arm manifest provides the Piper driver, model, and Curt Mini description.
+The base manifest adds `candle_ros2` for the base hardware interface and
+`openzen_driver` for the IMU. Both manifests use the same `curt_mini` revision.
 
 Install the Python SDK used by the Piper hardware node:
 
@@ -99,12 +94,23 @@ uv pip install --break-system-packages \
 uv pip install numpy pyyaml
 ```
 
-Install the remaining declared ROS and system dependencies:
+Install the declared dependencies for the Piper arm and MoveIt:
 
 From the workspace:
 ```bash
-rosdep install --from-paths src --ignore-src --rosdistro jazzy -ry
+rosdep install --from-paths \
+  src/piper_driver/agx_arm_ros/src \
+  src/piper_driver/agx_arm_urdf \
+  src/curt_mini/curt_mini_description \
+  src/curtmini_piper/curtmini_piper_description \
+  src/curtmini_piper/curtmini_piper_moveit_config \
+  src/curtmini_piper/curtmini_piper_bringup \
+  --ignore-src --rosdistro jazzy -ry
 ```
+
+For the base as well, install dependencies from its packages and build
+`curt_mini_bringup` with `openzen_driver`. The base driver is independent of
+the Piper arm build.
 
 ## Build
 
@@ -114,6 +120,13 @@ From the workspace root:
 source /opt/ros/jazzy/setup.bash
 colcon build --packages-up-to \
   curtmini_piper_bringup
+source install/setup.bash
+```
+
+If you imported the base dependencies, build them separately:
+
+```bash
+colcon build --packages-up-to curt_mini_bringup openzen_driver
 source install/setup.bash
 ```
 
@@ -130,18 +143,22 @@ Activate the CAN bus. From the workspace:
 bash src/piper_driver/agx_arm_ros/scripts/can_activate.sh
 ```
 
-Piper + Mobile Base bringup
+Start the Piper arm and MoveIt:
 ```bash
 ros2 launch curtmini_piper_bringup bringup.launch.py
 ```
 
-Piper only 
-```sh
-ros2 launch curtmini_piper_bringup bringup.launch.py start_base:=false
+To start the mobile base as well, run this in a second terminal:
+
+```bash
+ros2 launch curt_mini_bringup robot_base.launch.py \
+  publish_robot_description:=False
 ```
 
-The defaults start the Curt Mini hardware, joystick, IMU, Piper on `can0`,
-MoveIt, and RViz. MoveIt uses prefixed names such as `piper_joint1`; a bridge
+The Piper launch publishes the complete robot model, so the base launch skips
+its own base-only model in this combination. For the base alone, use
+`ros2 launch curt_mini_bringup robot_base.launch.py` with its default model
+publisher. MoveIt uses prefixed names such as `piper_joint1`; a bridge
 translates these to the unprefixed names expected by `agx_arm_ctrl`.
 
 The AGX command interface defaults to `control_enabled=true` and accepts
@@ -154,10 +171,22 @@ robot-state-publisher description, but is not used as an FCL collision mesh.
 
 ## Hardware-free MoveIt/RViz
 
+For a self-contained mock arm demo, run:
+
+```bash
+ros2 launch curtmini_piper_moveit_config demo.launch.py
+```
+
+The Piper bringup also supports mock arm hardware:
+
 ```bash
 ros2 launch curtmini_piper_bringup bringup.launch.py \
-  start_base:=false start_arm_hardware:=false
+  start_arm_hardware:=false
 ```
+
+Both the real bringup and Gazebo start `move_group` through
+`curtmini_piper_moveit_config/launch/move_group.launch.py`. They select their
+own MoveIt controller mapping. Start only one backend at a time.
 
 ## Standalone MoveIt RViz
 
@@ -181,7 +210,7 @@ TCP offset arguments must match those passed to the bringup launch.
 ## MoveItPy
 
 Start simulation or real robot bringup first. The example package now lives in
-[`curtmini_piper_tools`](../curtmini_piper_tools/curtmini_piper_motion_examples/README.md).
+[`curtmini_piper_tools`](../curtmini_piper_tools/curtmini_piper_moveitpy_example/README.md).
 Its ROS package and `moveit_goal` command keep the same names.
 
 ## Mount calibration

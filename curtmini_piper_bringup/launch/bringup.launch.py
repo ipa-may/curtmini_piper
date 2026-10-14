@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import xacro
@@ -7,7 +6,6 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
-    ExecuteProcess,
     IncludeLaunchDescription,
     OpaqueFunction,
 )
@@ -56,17 +54,12 @@ def _tcp_offset_literal():
     return _float_array_literal(values)
 
 
-def _find_serial_device(prefix, default):
-    matches = [name for name in os.listdir("/dev") if name.startswith(prefix)]
-    return matches[0] if len(matches) == 1 else default
-
-
 def _build_moveit_config(context):
     description_share = Path(
         get_package_share_directory("curtmini_piper_description")
     )
-    bringup_share = Path(
-        get_package_share_directory("curtmini_piper_bringup")
+    moveit_share = Path(
+        get_package_share_directory("curtmini_piper_moveit_config")
     )
     piper_joint_limits_file = LaunchConfiguration(
         "piper_joint_limits_file"
@@ -105,91 +98,12 @@ def _build_moveit_config(context):
         .sensors_3d(file_path="config/sensors_3d.yaml")
         .trajectory_execution(
             file_path=str(
-                bringup_share / "config" / "moveit_controllers.yaml"
+                moveit_share / "config" / "moveit_controllers_real.yaml"
             )
         )
         .to_moveit_configs()
     )
     return moveit_config, full_robot_description
-
-
-def _base_actions(context):
-    if not _as_bool(context, "start_base"):
-        return []
-
-    curt_share = Path(get_package_share_directory("curt_mini_bringup"))
-    ipa_share = Path(get_package_share_directory("ipa_ros2_control"))
-
-    actions = [
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                str(ipa_share / "launch" / "ros2_control.launch.py")
-            ),
-            launch_arguments={
-                "controllers_file": str(curt_share / "config" / "ros2_control.yaml")
-            }.items(),
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                str(curt_share / "bringup" / "start_controller.launch.py")
-            )
-        ),
-        Node(
-            package="twist_mux",
-            executable="twist_mux",
-            name="twist_mux",
-            output="screen",
-            parameters=[
-                str(curt_share / "config" / "twist_mux.yaml"),
-                {"use_sim_time": False},
-            ],
-            remappings=[("/cmd_vel_out", "/base_controller/cmd_vel")],
-        ),
-        ExecuteProcess(
-            cmd=[
-                "ros2",
-                "topic",
-                "pub",
-                "--rate",
-                "20",
-                "--print",
-                "0",
-                "/zero_twist/cmd_vel",
-                "geometry_msgs/msg/TwistStamped",
-                "{header: {stamp: now, frame_id: 'base_link'}}",
-            ],
-            output="log",
-        ),
-    ]
-
-    if _as_bool(context, "start_joystick"):
-        actions.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    str(curt_share / "bringup" / "joystick.launch.py")
-                )
-            )
-        )
-
-    if _as_bool(context, "start_imu"):
-        serial_device = _find_serial_device(
-            "ttyLPMS", "ttyLPMSCA3D00510053"
-        )
-        actions.append(
-            Node(
-                package="openzen_driver",
-                namespace="imu",
-                executable="openzen_node",
-                output="screen",
-                parameters=[
-                    {"sensor_interface": "LinuxDevice"},
-                    {"sensor_name": f"devicefile:/dev/{serial_device}"},
-                    {"frame_id": "imu_link"},
-                ],
-            )
-        )
-
-    return actions
 
 
 def _arm_actions(context):
@@ -343,16 +257,6 @@ def _launch_setup(context):
         get_package_share_directory("curtmini_piper_moveit_config")
     )
 
-    move_group_configuration = {
-        "publish_robot_description_semantic": True,
-        "allow_trajectory_execution": True,
-        "publish_planning_scene": True,
-        "publish_geometry_updates": True,
-        "publish_state_updates": True,
-        "publish_transforms_updates": True,
-        "monitor_dynamics": False,
-    }
-
     actions = [
         Node(
             package="robot_state_publisher",
@@ -362,20 +266,22 @@ def _launch_setup(context):
                 {"robot_description": full_robot_description}
             ],
         ),
-        Node(
-            package="moveit_ros_move_group",
-            executable="move_group",
-            output="screen",
-            parameters=[
-                moveit_config.to_dict(),
-                move_group_configuration,
-            ],
-            remappings=[("joint_states", "/joint_states")],
-            additional_env={"DISPLAY": os.environ.get("DISPLAY", "")},
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                str(moveit_share / "launch" / "move_group.launch.py")
+            ),
+            launch_arguments={
+                "controller_mode": "real",
+                "use_sim_time": "false",
+                "use_hokuyo": "false",
+                "use_sensors_3d": "true",
+                "piper_joint_limits_file": LaunchConfiguration(
+                    "piper_joint_limits_file"
+                ),
+            }.items(),
         ),
     ]
 
-    actions.extend(_base_actions(context))
     actions.extend(_arm_actions(context))
 
     if _as_bool(context, "use_rviz"):
@@ -405,24 +311,6 @@ def _launch_setup(context):
 def generate_launch_description():
     return LaunchDescription(
         [
-            DeclareLaunchArgument(
-                "start_base",
-                default_value="true",
-                choices=["true", "false"],
-                description="Start Curt Mini hardware and drive controllers.",
-            ),
-            DeclareLaunchArgument(
-                "start_joystick",
-                default_value="true",
-                choices=["true", "false"],
-                description="Start Curt Mini joystick teleoperation.",
-            ),
-            DeclareLaunchArgument(
-                "start_imu",
-                default_value="true",
-                choices=["true", "false"],
-                description="Start the Curt Mini OpenZen IMU driver.",
-            ),
             DeclareLaunchArgument(
                 "start_arm_hardware",
                 default_value="true",

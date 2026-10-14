@@ -134,15 +134,15 @@ services:
     profiles: [navigation-tools]
     command: [ros2, launch, curtmini_piper_navigation, rviz.launch.py]
 
-  real-bringup:
+  base-bringup:
     profiles: [hardware]
-    image: ${IMAGE_PREFIX:-curtmini-piper}-hardware:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    image: ${IMAGE_PREFIX:-curtmini-piper}-base-hardware:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
     build:
       context: https://github.com/ipa-may/curtmini_piper.git#main
       additional_contexts:
         container_common: ${CONTAINER_INFRA_SOURCE:-../../../../curtmini_piper_containers}/common
       dockerfile: docker/Dockerfile
-      target: hardware
+      target: base-hardware
       args:
         <<: *build-args
     network_mode: host
@@ -151,7 +151,6 @@ services:
       <<: *ros-environment
     volumes:
       - /dev/bus/usb:/dev/bus/usb
-      - *geometry-config
     devices:
       - ${LPMS_DEVICE:-/dev/ttyLPMSCA3D00510053}:${LPMS_DEVICE:-/dev/ttyLPMSCA3D00510053}
       - ${JOYSTICK_DEVICE:-/dev/input/js0}:${JOYSTICK_DEVICE:-/dev/input/js0}
@@ -160,14 +159,9 @@ services:
     command:
       - ros2
       - launch
-      - curtmini_piper_bringup
-      - bringup.launch.py
-      - can_port:=${CAN_PORT:-can0}
-      - start_joystick:=${START_JOYSTICK:-true}
-      - start_imu:=${START_IMU:-true}
-      - use_rviz:=false
-      - control_enabled:=${CONTROL_ENABLED:-true}
-      - fast_mode:=${FAST_MODE:-true}
+      - curt_mini_bringup
+      - robot_base.launch.py
+      - publish_robot_description:=${PUBLISH_BASE_DESCRIPTION:-False}
     stop_grace_period: 20s
 
   piper-bringup:
@@ -193,9 +187,6 @@ services:
       - curtmini_piper_bringup
       - bringup.launch.py
       - can_port:=${CAN_PORT:-can0}
-      - start_base:=false
-      - start_joystick:=false
-      - start_imu:=false
       - start_arm_hardware:=true
       - use_rviz:=false
       - control_enabled:=${CONTROL_ENABLED:-true}

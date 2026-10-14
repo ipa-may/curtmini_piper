@@ -98,12 +98,9 @@ RUN apt-get update \
       python3-rosdep python3-vcstool \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /opt/ws
-COPY dependencies.repos /tmp/dependencies.repos
-COPY docker/dependencies/ /tmp/dependencies/
-RUN manifest=/tmp/dependencies.repos \
-    && if [[ -f "/tmp/dependencies/${ROS_DISTRO}.repos" ]]; then manifest="/tmp/dependencies/${ROS_DISTRO}.repos"; fi \
-    && mkdir -p /opt/ws/src \
-    && vcs import --recursive /opt/ws/src < "${manifest}"
+COPY docker/dependencies/arm.repos /tmp/arm.repos
+RUN mkdir -p /opt/ws/src \
+    && vcs import --recursive /opt/ws/src < /tmp/arm.repos
 COPY . /opt/ws/src/curtmini_piper
 RUN apt-get update \
     && rosdep update --rosdistro "${ROS_DISTRO}" \
@@ -132,7 +129,7 @@ RUN source /opt/ws/install/setup.bash \
 FROM robot-builder AS hardware-builder
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-      libbluetooth-dev libusb-1.0-0-dev python3-pip \
+      python3-pip \
     && rm -rf /var/lib/apt/lists/*
 COPY docker/dependencies/${ROS_DISTRO}-hardware-python.env /tmp/python.lock.env
 RUN source /tmp/python.lock.env \
@@ -143,11 +140,6 @@ RUN source /opt/ws/install/setup.bash \
     && rosdep install \
       --from-paths \
         /opt/ws/src/piper_driver/agx_arm_ros/src \
-        /opt/ws/src/candle_ros2 \
-        /opt/ws/src/openzenros2 \
-        /opt/ws/src/curt_mini/ipa_ros2_control \
-        /opt/ws/src/curt_mini/curt_mini_bringup \
-        /opt/ws/src/curt_mini/curt_mini_teleop \
         /opt/ws/src/curtmini_piper/curtmini_piper_bringup \
       --ignore-src --rosdistro "${ROS_DISTRO}" \
       --skip-keys "gz_ros2_control warehouse_ros_mongo" -r -y \
@@ -158,6 +150,34 @@ RUN source /opt/ws/install/setup.bash \
       --packages-up-to curtmini_piper_bringup \
       --packages-skip agx_arm_urdf curt_mini_description \
         curtmini_piper_description curtmini_piper_moveit_config
+
+FROM ros-base AS base-hardware-builder
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      build-essential cmake git libbluetooth-dev libusb-1.0-0-dev \
+      python3-colcon-common-extensions python3-rosdep python3-vcstool \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/ws
+COPY docker/dependencies/base.repos /tmp/base.repos
+RUN mkdir -p /opt/ws/src \
+    && vcs import --recursive /opt/ws/src < /tmp/base.repos
+RUN apt-get update \
+    && rosdep update --rosdistro "${ROS_DISTRO}" \
+    && rosdep install \
+      --from-paths \
+        /opt/ws/src/candle_ros2 \
+        /opt/ws/src/openzenros2 \
+        /opt/ws/src/curt_mini/curt_mini_description \
+        /opt/ws/src/curt_mini/ipa_ros2_control \
+        /opt/ws/src/curt_mini/curt_mini_bringup \
+        /opt/ws/src/curt_mini/curt_mini_teleop \
+      --ignore-src --rosdistro "${ROS_DISTRO}" \
+      --skip-keys "gz_ros2_control warehouse_ros_mongo" -r -y \
+    && rm -rf /var/lib/apt/lists/*
+RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" \
+    && colcon build --merge-install \
+      --cmake-args -DCMAKE_BUILD_TYPE=Release \
+      --packages-up-to curt_mini_bringup openzen_driver
 
 FROM hardware-builder AS hardware-test
 ENV PYTHONPATH=/opt/ws/python
@@ -185,7 +205,7 @@ COPY --from=robot-builder /opt/ws/install/ /opt/ws/install/
 CMD ["ros2", "launch", "curtmini_piper_moveit_config", "moveit_rviz.launch.py"]
 
 FROM moveit-base AS hardware
-LABEL org.opencontainers.image.title="Curt Mini Piper Hardware"
+LABEL org.opencontainers.image.title="Curt Mini Piper Arm Hardware"
 ENV PYTHONPATH=/opt/ws/python
 COPY docker/hardware/packages.txt /tmp/runtime-packages.txt
 COPY docker/hardware/ros-packages.txt /tmp/ros-packages.txt
@@ -197,3 +217,15 @@ RUN apt-get update \
 COPY --from=hardware-builder /opt/ws/install/ /opt/ws/install/
 COPY --from=hardware-builder /opt/ws/python/ /opt/ws/python/
 CMD ["ros2", "launch", "curtmini_piper_bringup", "bringup.launch.py", "use_rviz:=false"]
+
+FROM ros-base AS base-hardware
+LABEL org.opencontainers.image.title="Curt Mini Base Hardware"
+COPY docker/base-hardware/packages.txt /tmp/runtime-packages.txt
+COPY docker/base-hardware/ros-packages.txt /tmp/ros-packages.txt
+RUN apt-get update \
+    && xargs -r -a /tmp/runtime-packages.txt apt-get install -y --no-install-recommends \
+    && sed "s|^|ros-${ROS_DISTRO}-|" /tmp/ros-packages.txt \
+      | xargs -r apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* /tmp/*-packages.txt
+COPY --from=base-hardware-builder /opt/ws/install/ /opt/ws/install/
+CMD ["ros2", "launch", "curt_mini_bringup", "robot_base.launch.py"]
