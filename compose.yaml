@@ -1,0 +1,7 @@
+include:
+  - ./docker/common/compose.yaml
+  - ./curtmini_piper_description/docker/compose.yaml
+  - ./curtmini_piper_moveit_config/docker/compose.yaml
+  - ./curtmini_piper_bringup/docker/compose.yaml
+  - ./curtmini_piper_navigation/docker/compose.yaml
+  - ./curtmini_piper_sensors/docker/compose.yaml

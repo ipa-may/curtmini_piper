@@ -1,0 +1,47 @@
+x-ros-environment: &ros-environment
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+  RMW_IMPLEMENTATION: rmw_${RMW:-cyclonedds}_cpp
+
+x-build-args: &build-args
+  ROS_DISTRO: ${CONTAINER_ROS_DISTRO:-jazzy}
+  ROS_IMAGE: ${ROS_IMAGE:-ros:${CONTAINER_ROS_DISTRO:-jazzy}-ros-base-noble}
+  RMW: ${RMW:-cyclonedds}
+  OCI_SOURCE: ${OCI_SOURCE:-}
+  OCI_REVISION: ${OCI_REVISION:-unknown}
+
+x-navigation: &navigation
+  image: ${IMAGE_PREFIX:-curtmini-piper}-navigation:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+  build:
+    context: ${CURTMINI_PIPER_IMAGE_SOURCE:-https://github.com/ipa-may/curtmini_piper.git#main}
+    additional_contexts:
+      ros_base: service:piper-ros-base
+      robot_description: service:piper-description
+    dockerfile: curtmini_piper_navigation/docker/Dockerfile
+    target: navigation
+    args:
+      <<: *build-args
+  network_mode: host
+  init: true
+  environment:
+    <<: *ros-environment
+  stop_grace_period: 10s
+
+services:
+  mapping-sim:
+    <<: *navigation
+    profiles: [mapping]
+    volumes:
+      - ../maps:/maps
+    command: [ros2, launch, curtmini_piper_navigation, mapping.launch.py]
+
+  nav2-sim:
+    <<: *navigation
+    profiles: [navigation]
+    volumes:
+      - ../maps:/maps:ro
+    command: [ros2, launch, curtmini_piper_navigation, navigation.launch.py, "map:=/maps/${NAV2_MAP:-map.yaml}"]
+
+  nav2-rviz-sim:
+    <<: *navigation
+    profiles: [navigation-tools]
+    command: [ros2, launch, curtmini_piper_navigation, rviz.launch.py]

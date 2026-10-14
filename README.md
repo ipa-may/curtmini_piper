@@ -18,6 +18,12 @@ This repository contains five ROS 2 packages:
 Student-facing MoveItPy, AprilTag, and Nav2 clients live in the separate
 [`curtmini_piper_tools` repository](../curtmini_piper_tools/README.md).
 
+Each package owns its Dockerfile and Compose services under `docker/`.
+The root `compose.yaml` includes them; the project infrastructure remains
+responsible for middleware and workspace configuration. See the
+[container guide](doc/containers.md) for image dependencies, local builds,
+and tests.
+
 The prefix-aware Piper model and meshes come from `agx_arm_urdf`; the Curt Mini
 model lives in `curt_mini_description`, and base controllers remain in
 `curt_mini_bringup`. This package owns only the mount and TCP joints that

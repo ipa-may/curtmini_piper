@@ -1,0 +1,3 @@
+include:
+  - ./curtmini_piper_moveit_config/docker/compose.gui.yaml
+  - ./curtmini_piper_navigation/docker/compose.gui.yaml

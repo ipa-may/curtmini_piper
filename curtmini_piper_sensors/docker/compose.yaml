@@ -1,0 +1,58 @@
+x-ros-environment: &ros-environment
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+  RMW_IMPLEMENTATION: rmw_${RMW:-cyclonedds}_cpp
+
+x-build-args: &build-args
+  ROS_DISTRO: ${CONTAINER_ROS_DISTRO:-jazzy}
+  ROS_IMAGE: ${ROS_IMAGE:-ros:${CONTAINER_ROS_DISTRO:-jazzy}-ros-base-noble}
+  RMW: ${RMW:-cyclonedds}
+  OCI_SOURCE: ${OCI_SOURCE:-}
+  OCI_REVISION: ${OCI_REVISION:-unknown}
+
+x-sensors: &sensors
+  image: ${IMAGE_PREFIX:-curtmini-piper}-sensors:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+  build:
+    context: ${CURTMINI_PIPER_IMAGE_SOURCE:-https://github.com/ipa-may/curtmini_piper.git#main}
+    additional_contexts:
+      ros_base: service:piper-ros-base
+    dockerfile: curtmini_piper_sensors/docker/Dockerfile
+    target: sensors
+    args:
+      <<: *build-args
+  network_mode: host
+  init: true
+  environment:
+    <<: *ros-environment
+  volumes:
+    - /dev/bus/usb:/dev/bus/usb
+    - type: bind
+      source: ../config
+      target: /opt/ws/install/share/curtmini_piper_sensors/config
+      read_only: true
+      bind:
+        create_host_path: false
+  device_cgroup_rules:
+    - "c 189:* rmw"
+
+services:
+  realsense-base:
+    <<: *sensors
+    profiles: [hardware-cameras]
+    command:
+      - ros2
+      - launch
+      - curtmini_piper_sensors
+      - realsense_camera.launch.py
+      - camera:=base_camera
+      - serial_no:=${BASE_CAMERA_SERIAL:-}
+
+  realsense-tool:
+    <<: *sensors
+    profiles: [hardware-cameras]
+    command:
+      - ros2
+      - launch
+      - curtmini_piper_sensors
+      - realsense_camera.launch.py
+      - camera:=tool_camera
+      - serial_no:=${TOOL_CAMERA_SERIAL:-}

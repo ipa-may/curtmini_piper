@@ -1,0 +1,147 @@
+x-ros-environment: &ros-environment
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+  RMW_IMPLEMENTATION: rmw_${RMW:-cyclonedds}_cpp
+
+x-build-args: &build-args
+  ROS_DISTRO: ${CONTAINER_ROS_DISTRO:-jazzy}
+  ROS_IMAGE: ${ROS_IMAGE:-ros:${CONTAINER_ROS_DISTRO:-jazzy}-ros-base-noble}
+  RMW: ${RMW:-cyclonedds}
+  OCI_SOURCE: ${OCI_SOURCE:-}
+  OCI_REVISION: ${OCI_REVISION:-unknown}
+
+x-geometry-config: &geometry-config
+  type: bind
+  source: ../../curtmini_piper_description/config
+  target: /opt/ws/install/share/curtmini_piper_description/config
+  read_only: true
+  bind:
+    create_host_path: false
+
+x-keyboard-teleop: &keyboard-teleop
+  image: ${IMAGE_PREFIX:-curtmini-piper}-teleop:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+  build:
+    context: ${CURTMINI_PIPER_IMAGE_SOURCE:-https://github.com/ipa-may/curtmini_piper.git#main}
+    additional_contexts:
+      ros_base: service:piper-ros-base
+    dockerfile: curtmini_piper_bringup/docker/Dockerfile
+    target: teleop
+    args:
+      <<: *build-args
+  network_mode: host
+  init: true
+  stdin_open: true
+  tty: true
+  environment:
+    <<: *ros-environment
+
+services:
+  base-bringup:
+    profiles: [hardware]
+    image: ${IMAGE_PREFIX:-curtmini-piper}-base-hardware:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    build:
+      context: ${CURTMINI_PIPER_IMAGE_SOURCE:-https://github.com/ipa-may/curtmini_piper.git#main}
+      additional_contexts:
+        ros_base: service:piper-ros-base
+      dockerfile: curtmini_piper_bringup/docker/Dockerfile
+      target: base-hardware
+      args:
+        <<: *build-args
+    network_mode: host
+    init: true
+    environment:
+      <<: *ros-environment
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+    devices:
+      - ${LPMS_DEVICE:-/dev/ttyLPMSCA3D00510053}:${LPMS_DEVICE:-/dev/ttyLPMSCA3D00510053}
+      - ${JOYSTICK_DEVICE:-/dev/input/js0}:${JOYSTICK_DEVICE:-/dev/input/js0}
+    device_cgroup_rules:
+      - "c 189:* rmw"
+    command:
+      - ros2
+      - launch
+      - curt_mini_bringup
+      - robot_base.launch.py
+      - publish_robot_description:=${PUBLISH_BASE_DESCRIPTION:-False}
+    stop_grace_period: 20s
+
+  piper-bringup:
+    profiles: [piper-hardware]
+    image: ${IMAGE_PREFIX:-curtmini-piper}-hardware:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    build:
+      context: ${CURTMINI_PIPER_IMAGE_SOURCE:-https://github.com/ipa-may/curtmini_piper.git#main}
+      additional_contexts:
+        ros_base: service:piper-ros-base
+        moveit_config: service:piper-moveit-config
+      dockerfile: curtmini_piper_bringup/docker/Dockerfile
+      target: hardware
+      args:
+        <<: *build-args
+    network_mode: host
+    init: true
+    environment:
+      <<: *ros-environment
+    volumes:
+      - *geometry-config
+    command:
+      - ros2
+      - launch
+      - curtmini_piper_bringup
+      - bringup.launch.py
+      - can_port:=${CAN_PORT:-can0}
+      - start_arm_hardware:=true
+      - use_rviz:=false
+      - control_enabled:=${CONTROL_ENABLED:-true}
+      - fast_mode:=${FAST_MODE:-true}
+    stop_grace_period: 20s
+
+  keyboard-teleop-sim:
+    <<: *keyboard-teleop
+    profiles: [simulation-tools]
+    command:
+      - ros2
+      - run
+      - teleop_twist_keyboard
+      - teleop_twist_keyboard
+      - --ros-args
+      - -p
+      - stamped:=true
+      - -p
+      - frame_id:=base_link
+      - -r
+      - cmd_vel:=/base_controller/cmd_vel
+
+  keyboard-teleop-hardware:
+    <<: *keyboard-teleop
+    profiles: [hardware-tools]
+    command:
+      - ros2
+      - run
+      - teleop_twist_keyboard
+      - teleop_twist_keyboard
+      - --ros-args
+      - -p
+      - stamped:=true
+      - -p
+      - frame_id:=base_link
+      - -r
+      - cmd_vel:=/cmd_vel
+
+  ros-cli:
+    profiles: [tools]
+    image: ${IMAGE_PREFIX:-curtmini-piper}-teleop:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    build:
+      context: ${CURTMINI_PIPER_IMAGE_SOURCE:-https://github.com/ipa-may/curtmini_piper.git#main}
+      additional_contexts:
+        ros_base: service:piper-ros-base
+      dockerfile: curtmini_piper_bringup/docker/Dockerfile
+      target: teleop
+      args:
+        <<: *build-args
+    network_mode: host
+    init: true
+    stdin_open: true
+    tty: true
+    environment:
+      <<: *ros-environment
+    command: [bash]

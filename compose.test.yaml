@@ -1,0 +1,45 @@
+# Apply after compose.yaml; build targets run checks without starting robot nodes.
+services:
+  piper-description-test:
+    extends:
+      file: ./curtmini_piper_description/docker/compose.yaml
+      service: piper-description
+    profiles: !override [image-test]
+    scale: 1
+    image: ${IMAGE_PREFIX:-curtmini-piper}-description-test:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    build:
+      target: test
+    command: ["true"]
+
+  piper-moveit-test:
+    extends:
+      file: ./curtmini_piper_moveit_config/docker/compose.yaml
+      service: piper-moveit-config
+    profiles: !override [image-test]
+    scale: 1
+    image: ${IMAGE_PREFIX:-curtmini-piper}-moveit-test:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    build:
+      target: moveit-rviz-test
+    command: ["true"]
+
+  piper-hardware-test:
+    extends:
+      file: ./curtmini_piper_bringup/docker/compose.yaml
+      service: piper-bringup
+    profiles: !override [image-test]
+    scale: 1
+    image: ${IMAGE_PREFIX:-curtmini-piper}-hardware-test:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    build:
+      target: hardware-test
+    command: ["true"]
+
+  piper-teleop-test:
+    extends:
+      file: ./curtmini_piper_bringup/docker/compose.yaml
+      service: keyboard-teleop-sim
+    profiles: !override [image-test]
+    scale: 1
+    image: ${IMAGE_PREFIX:-curtmini-piper}-teleop-test:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    build:
+      target: teleop-test
+    command: ["true"]

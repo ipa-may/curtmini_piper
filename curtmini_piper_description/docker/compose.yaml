@@ -1,0 +1,21 @@
+x-build-args: &build-args
+  ROS_DISTRO: ${CONTAINER_ROS_DISTRO:-jazzy}
+  ROS_IMAGE: ${ROS_IMAGE:-ros:${CONTAINER_ROS_DISTRO:-jazzy}-ros-base-noble}
+  RMW: ${RMW:-cyclonedds}
+  OCI_SOURCE: ${OCI_SOURCE:-}
+  OCI_REVISION: ${OCI_REVISION:-unknown}
+
+services:
+  piper-description:
+    # Available to every build graph, with no runtime containers.
+    scale: 0
+    image: ${IMAGE_PREFIX:-curtmini-piper}-description:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    build:
+      context: ${CURTMINI_PIPER_IMAGE_SOURCE:-https://github.com/ipa-may/curtmini_piper.git#main}
+      dockerfile: curtmini_piper_description/docker/Dockerfile
+      target: runtime
+      additional_contexts:
+        ros_base: service:piper-ros-base
+      args:
+        <<: *build-args
+    command: ["true"]
