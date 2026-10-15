@@ -24,6 +24,8 @@ def generate_launch_description():
                 xacro_file,
                 " simulation:=False use_hokuyo:=",
                 LaunchConfiguration("use_hokuyo"),
+                " arm_model:=",
+                LaunchConfiguration("arm_model"),
             ]
         ),
         value_type=str,
@@ -33,6 +35,9 @@ def generate_launch_description():
         [
             DeclareLaunchArgument(
                 "use_hokuyo", default_value="false", choices=["true", "false"]
+            ),
+            DeclareLaunchArgument(
+                "arm_model", default_value="piper", choices=["piper", "piper_h", "piper_l"]
             ),
             Node(
                 package="robot_state_publisher",

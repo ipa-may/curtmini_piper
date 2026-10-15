@@ -1,10 +1,10 @@
-# PROVISIONAL values copied from curtmini_piper_description/config/geometry.yaml.
+# PROVISIONAL hardware mount poses; these are not calibrated to the URDF.
 # Measure each installed camera relative to its parent before hardware use.
 base_camera_mount:
   parent: chassis
   position: { x: 0.32, y: 0.0, z: 0.15 }
   rotation: { r: 0.0, p: 0.0, y: 0.0 }
 tool_camera_mount:
-  parent: piper_tcp_link
+  parent: piper_gripper_base
   position: { x: 0.0, y: 0.0, z: 0.08 }
   rotation: { r: 0.0, p: 0.0, y: 0.0 }

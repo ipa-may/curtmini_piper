@@ -59,8 +59,14 @@
 
   <xacro:d435i_body name="base_camera" parent="chassis"
     xyz="${base_camera_mount_xyz}" rpy="${base_camera_mount_rpy}" />
-  <xacro:d435i_body name="tool_camera" parent="$(arg arm_prefix)tcp_link"
-    xyz="${tool_camera_mount_xyz}" rpy="${tool_camera_mount_rpy}" />
+  <xacro:if value="$(eval arm_model == 'piper')">
+    <xacro:d435i_body name="tool_camera" parent="$(arg arm_prefix)tcp_link"
+      xyz="${tool_camera_mount_xyz}" rpy="${tool_camera_mount_rpy}" />
+  </xacro:if>
+  <xacro:unless value="$(eval arm_model == 'piper')">
+    <xacro:d435i_body name="tool_camera" parent="$(arg arm_prefix)gripper_base"
+      xyz="${tool_camera_mount_xyz}" rpy="${tool_camera_mount_rpy}" />
+  </xacro:unless>
 
   <xacro:if value="$(arg use_hokuyo)">
     <xacro:hokuyo_utm_30lx_ew

@@ -13,6 +13,10 @@ Visualization Manager:
     - Class: rviz_default_plugins/Grid
       Enabled: true
       Name: Grid
+      Offset:
+        X: 0
+        Y: 0
+        Z: -0.16
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>

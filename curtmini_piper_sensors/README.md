@@ -8,7 +8,8 @@ the robot-to-camera mount transform.
 Set measured poses in `config/camera_mounts.yaml` before hardware use. The
 included values are nominal simulation starting values, not calibrations.
 `base_camera` is mounted on `chassis`; `tool_camera` is mounted on
-`piper_tcp_link`. Static mount transforms remain valid while the arm moves.
+`piper_gripper_base` on the H and L arms. Static mount transforms remain valid
+while the arm moves.
 
 Examples from a sourced Jazzy workspace:
 
