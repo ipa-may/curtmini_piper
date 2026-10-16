@@ -10,7 +10,7 @@
   </group>
   <passive_joint name="piper_gripper_joint1" />
   <passive_joint name="piper_gripper_joint2" />
-  <end_effector name="gripper_eef" parent_link="piper_gripper_base" group="gripper" parent_group="arm" />
+  <end_effector name="gripper_eef" parent_link="piper_gripper_tcp" group="gripper" parent_group="arm" />
 
   <group_state name="home" group="arm">
     <joint name="piper_joint1" value="0.0" />
@@ -18,6 +18,14 @@
     <joint name="piper_joint3" value="-1.2" />
     <joint name="piper_joint4" value="0.0" />
     <joint name="piper_joint5" value="0.0" />
+    <joint name="piper_joint6" value="0.0" />
+  </group_state>
+  <group_state name="UP" group="arm">
+    <joint name="piper_joint1" value="0.0" />
+    <joint name="piper_joint2" value="1.0" />
+    <joint name="piper_joint3" value="-1.2" />
+    <joint name="piper_joint4" value="0.0" />
+    <joint name="piper_joint5" value="-1.2835299" />
     <joint name="piper_joint6" value="0.0" />
   </group_state>
   <group_state name="open" group="gripper"><joint name="piper_gripper" value="0.1" /></group_state>
