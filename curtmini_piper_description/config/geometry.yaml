@@ -12,6 +12,6 @@ lidar_mount_on_base:
 base_camera_mount:
   position: { x: 0.32, y: 0.0, z: 0.15 }
   rotation: { r: 0.0, p: 0.0, y: 0.0 }
-tool_camera_mount: # 
+tool_camera_mount: #
   position: { x: -0.05, y: 0.0, z: 0.05 }
-  rotation: { r: 0.0, p: 0.0, y: 0.0 }
+  rotation: { r: 0.0, p: -1.5708, y: 0.0 }
