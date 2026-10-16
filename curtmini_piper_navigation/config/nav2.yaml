@@ -11,8 +11,8 @@ amcl:
     max_beams: 90
     min_particles: 500
     max_particles: 2000
-    update_min_d: 0.1
-    update_min_a: 0.1
+    update_min_d: 0.05 # rotation steps (in rad) before filter update
+    update_min_a: 0.1 # translation step (in m) before filter update
     transform_tolerance: 1.0
     tf_broadcast: true
     # Use RViz's 2D Pose Estimate after loading a map.
@@ -79,7 +79,16 @@ controller_server:
       trans_stopped_velocity: 0.05
       short_circuit_trajectory_evaluation: true
       stateful: true
-      critics: [RotateToGoal, Oscillation, ObstacleFootprint, GoalAlign, PathAlign, PathDist, GoalDist]
+      critics:
+        [
+          RotateToGoal,
+          Oscillation,
+          ObstacleFootprint,
+          GoalAlign,
+          PathAlign,
+          PathDist,
+          GoalDist,
+        ]
       ObstacleFootprint.scale: 0.02
       PathAlign.scale: 32.0
       PathAlign.forward_point_distance: 0.1
