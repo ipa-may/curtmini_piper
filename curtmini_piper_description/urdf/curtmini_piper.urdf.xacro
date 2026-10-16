@@ -5,6 +5,7 @@
   <xacro:include filename="$(find agx_arm_urdf)/piper/urdf/piper_arm.xacro" />
   <xacro:include filename="$(find agx_arm_urdf)/piper_h/urdf/piper_h_with_gripper.xacro" />
   <xacro:include filename="$(find agx_arm_urdf)/piper_l/urdf/piper_l_with_gripper.xacro" />
+  <xacro:include filename="$(find agx_arm_urdf)/piper_x/urdf/piper_x_with_gripper.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/piper_ros2_control.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/hokuyo_utm_30lx_ew.xacro" />
   <xacro:include filename="$(find curtmini_piper_description)/urdf/d435i_body.xacro" />
@@ -33,6 +34,9 @@
   </xacro:if>
   <xacro:if value="$(eval arm_model == 'piper_l')">
     <xacro:piper_l_with_gripper prefix="$(arg arm_prefix)" />
+  </xacro:if>
+  <xacro:if value="$(eval arm_model == 'piper_x')">
+    <xacro:piper_x_with_gripper prefix="$(arg arm_prefix)" />
   </xacro:if>
 
   <joint name="$(arg arm_prefix)mount_joint" type="fixed">

@@ -38,7 +38,7 @@ def _launch_setup(context):
     )
     controller_mode = LaunchConfiguration("controller_mode").perform(context)
     if model != "piper" and controller_mode == "sim":
-        raise RuntimeError("Gazebo controllers are not configured for Piper H/L yet")
+        raise RuntimeError("Gazebo controllers are not configured for Piper H/L/X yet")
     controller_file = config_share / "config" / f"moveit_controllers_{controller_mode}.yaml"
     mappings = {
         "simulation": "False",
@@ -106,7 +106,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "arm_model",
                 default_value="piper",
-                choices=["piper", "piper_h", "piper_l"],
+                choices=["piper", "piper_h", "piper_l", "piper_x"],
             ),
             DeclareLaunchArgument(
                 "controller_mode",

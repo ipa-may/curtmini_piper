@@ -19,6 +19,7 @@ COPY --from=robot_description /opt/ws/install/ /opt/ws/install/
 COPY curtmini_piper_moveit_config /opt/ws/src/curtmini_piper_moveit_config
 COPY curtmini_piper_h_gripper_moveit_config /opt/ws/src/curtmini_piper_h_gripper_moveit_config
 COPY curtmini_piper_l_gripper_moveit_config /opt/ws/src/curtmini_piper_l_gripper_moveit_config
+COPY curtmini_piper_x_gripper_moveit_config /opt/ws/src/curtmini_piper_x_gripper_moveit_config
 RUN source /opt/ws/install/setup.bash \
     && apt-get update \
     && rosdep update --rosdistro "${ROS_DISTRO}" \
@@ -29,7 +30,8 @@ RUN source /opt/ws/install/setup.bash \
 RUN source /opt/ws/install/setup.bash \
     && colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release \
       --packages-select curtmini_piper_moveit_config \
-        curtmini_piper_h_gripper_moveit_config curtmini_piper_l_gripper_moveit_config
+        curtmini_piper_h_gripper_moveit_config curtmini_piper_l_gripper_moveit_config \
+        curtmini_piper_x_gripper_moveit_config
 
 FROM builder AS moveit-rviz-test
 RUN source /opt/ws/install/setup.bash \

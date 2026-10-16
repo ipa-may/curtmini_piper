@@ -94,7 +94,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "arm_model",
                 default_value="piper",
-                choices=["piper", "piper_h", "piper_l"],
+                choices=["piper", "piper_h", "piper_l", "piper_x"],
             ),
             DeclareLaunchArgument(
                 "use_sim_time",

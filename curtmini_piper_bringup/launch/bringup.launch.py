@@ -19,7 +19,7 @@ from moveit_configs_utils import MoveItConfigsBuilder
 
 ARM_PREFIX = "piper_"
 ARM_NAMESPACE = "piper"
-GRIPPER_MODELS = ("piper_h", "piper_l")
+GRIPPER_MODELS = ("piper_h", "piper_l", "piper_x")
 
 
 def _arm_model(context):
@@ -355,7 +355,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "arm_model",
                 default_value="piper",
-                choices=["piper", "piper_h", "piper_l"],
+                choices=["piper", "piper_h", "piper_l", "piper_x"],
                 description="Arm model mounted on Curt Mini.",
             ),
             DeclareLaunchArgument(
