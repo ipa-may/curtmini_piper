@@ -66,6 +66,7 @@ services:
       - moveit_rviz.launch.py
       - use_sim_time:=true
       - use_hokuyo:=${SIM_USE_HOKUYO:-true}
+      - arm_model:=${ARM_MODEL:-piper_x}
 
   moveit-rviz-hardware:
     <<: *moveit-rviz

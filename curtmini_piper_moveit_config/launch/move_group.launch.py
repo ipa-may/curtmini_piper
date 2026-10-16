@@ -37,8 +37,6 @@ def _launch_setup(context):
         get_package_share_directory(config_package)
     )
     controller_mode = LaunchConfiguration("controller_mode").perform(context)
-    if model != "piper" and controller_mode == "sim":
-        raise RuntimeError("Gazebo controllers are not configured for Piper H/L/X yet")
     controller_file = config_share / "config" / f"moveit_controllers_{controller_mode}.yaml"
     mappings = {
         "simulation": "False",
