@@ -54,6 +54,7 @@ controller_server:
       stateful: true
     FollowPath:
       plugin: dwb_core::DWBLocalPlanner
+      forward_prune_distance: 5.0 # meters (controls how far ahead DWB keeps the global path for evaluating its candidate movements)
       min_vel_x: 0.0
       max_vel_x: 2.25 # 0.25
       min_vel_y: 0.0
@@ -109,8 +110,8 @@ local_costmap:
       update_frequency: 10.0
       publish_frequency: 2.0
       rolling_window: true
-      width: 4
-      height: 4
+      width: 12 # meters
+      height: 12 # meters
       resolution: 0.05
       transform_tolerance: 0.3
       # Conservative rectangle for the base and the stationary initial arm pose.
