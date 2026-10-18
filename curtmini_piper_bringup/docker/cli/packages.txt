@@ -1,0 +1,7 @@
+bash-completion
+graphviz
+iproute2
+iputils-ping
+less
+nano
+procps

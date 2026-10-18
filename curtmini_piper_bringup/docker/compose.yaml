@@ -130,13 +130,13 @@ services:
 
   ros-cli:
     profiles: [tools]
-    image: ${IMAGE_PREFIX:-curtmini-piper}-teleop:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
+    image: ${IMAGE_PREFIX:-curtmini-piper}-ros-cli:${CONTAINER_ROS_DISTRO:-jazzy}-${RMW:-cyclonedds}
     build:
       context: ${CURTMINI_PIPER_IMAGE_SOURCE:-https://github.com/ipa-may/curtmini_piper.git#main}
       additional_contexts:
-        ros_base: service:piper-ros-base
+        robot_description: service:piper-description
       dockerfile: curtmini_piper_bringup/docker/Dockerfile
-      target: teleop
+      target: ros-cli
       args:
         <<: *build-args
     network_mode: host

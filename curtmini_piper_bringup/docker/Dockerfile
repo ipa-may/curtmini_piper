@@ -1,4 +1,23 @@
 # syntax=docker/dockerfile:1.7
+FROM robot_description AS ros-cli
+ARG ROS_DISTRO=jazzy
+LABEL org.opencontainers.image.title="Curt Mini Piper Diagnostics"
+COPY curtmini_piper_bringup/docker/cli/packages.txt /tmp/cli-packages.txt
+COPY curtmini_piper_bringup/docker/cli/ros-packages.txt /tmp/cli-ros-packages.txt
+RUN apt-get update \
+    && xargs -r -a /tmp/cli-packages.txt apt-get install -y --no-install-recommends \
+    && sed "s|^|ros-${ROS_DISTRO}-|" /tmp/cli-ros-packages.txt \
+      | xargs -r apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* /tmp/cli*-packages.txt
+COPY curtmini_piper_bringup/docker/cli/entrypoint.sh /opt/container/cli_entrypoint.sh
+COPY curtmini_piper_bringup/docker/cli/bashrc /opt/container/cli.bashrc
+RUN chmod 0755 /opt/container/cli_entrypoint.sh \
+    && echo 'source /opt/container/cli.bashrc' >> /etc/bash.bashrc
+ENV HOME=/diagnostics/home
+WORKDIR /diagnostics
+ENTRYPOINT ["/opt/container/cli_entrypoint.sh"]
+CMD ["bash"]
+
 FROM ros_base AS teleop
 ARG ROS_DISTRO=jazzy
 LABEL org.opencontainers.image.title="Curt Mini Piper Teleop"

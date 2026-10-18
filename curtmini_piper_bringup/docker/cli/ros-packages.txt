@@ -1,0 +1,10 @@
+plotjuggler-ros
+ros2bag
+ros2controlcli
+ros2doctor
+rosbag2-storage-default-plugins
+rqt-console
+rqt-graph
+rviz2
+tf2-ros
+tf2-tools
