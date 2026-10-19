@@ -3,6 +3,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
+from std_srvs.srv import SetBool
 
 
 class JointStatePrefixBridge(Node):
@@ -17,8 +18,10 @@ class JointStatePrefixBridge(Node):
             "command_input", "control/joint_states_prefixed"
         )
         self.declare_parameter("command_output", "control/joint_states")
+        self.declare_parameter("commands_enabled", False)
 
         self._prefix = self.get_parameter("prefix").value
+        self._commands_enabled = self.get_parameter("commands_enabled").value
         feedback_input = self.get_parameter("feedback_input").value
         feedback_output = self.get_parameter("feedback_output").value
         command_input = self.get_parameter("command_input").value
@@ -34,8 +37,9 @@ class JointStatePrefixBridge(Node):
             JointState, feedback_input, self._feedback_callback, 10
         )
         self.create_subscription(
-            JointState, command_input, self._command_callback, 10
+            JointState, command_input, self._command_callback, 1
         )
+        self.create_service(SetBool, "bridge_enable", self._enable_callback)
 
         self.get_logger().info(
             f"Translating AGX joint names with prefix '{self._prefix}'"
@@ -73,6 +77,8 @@ class JointStatePrefixBridge(Node):
         )
 
     def _command_callback(self, msg):
+        if not self._commands_enabled:
+            return
         indices = [
             index
             for index, name in enumerate(msg.name)
@@ -87,6 +93,13 @@ class JointStatePrefixBridge(Node):
         self._command_pub.publish(
             self._translated_message(msg, names, indices)
         )
+
+    def _enable_callback(self, request, response):
+        self._commands_enabled = request.data
+        response.success = True
+        response.message = "Command forwarding " + ("enabled" if request.data else "blocked")
+        self.get_logger().info(response.message)
+        return response
 
 
 def main(args=None):

@@ -1,0 +1,13 @@
+/piper/home_arm:
+  ros__parameters:
+    # Joint-space startup recovery, not encoder calibration or collision planning.
+    # Check the approach on the physical installation before enabling hardware.
+    home_joint_positions_deg: [0.0, 5.0, -5.0, 0.0, 0.0, 0.0]
+    max_speed_deg_s: 5.0
+    position_tolerance_deg: 0.5
+    settle_motion_deg: 0.1
+    settle_time: 1.0
+    startup_timeout: 30.0
+    motion_timeout: 30.0
+    feedback_timeout: 0.5
+    command_rate: 50.0

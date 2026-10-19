@@ -1,4 +1,5 @@
 from pathlib import Path
+from functools import partial
 
 import xacro
 import yaml
@@ -7,9 +8,11 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    LogInfo,
     OpaqueFunction,
+    RegisterEventHandler,
 )
-from launch.conditions import UnlessCondition
+from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
@@ -253,9 +256,9 @@ def _arm_actions(context):
                     ),
                     "fast_mode": LaunchConfiguration("fast_mode"),
                     "tcp_offset": tcp_offset,
-                    "control_enabled": LaunchConfiguration(
-                        "control_enabled"
-                    ),
+                    # Homing owns control until measured feedback and the
+                    # mock-backed controller state have been synchronized.
+                    "control_enabled": "false",
                     "log_level": LaunchConfiguration("log_level"),
                 }.items(),
             ),
@@ -265,29 +268,17 @@ def _arm_actions(context):
                 name="joint_state_prefix_bridge",
                 namespace=ARM_NAMESPACE,
                 output="screen",
-                parameters=[{"prefix": ARM_PREFIX}],
-            ),
-            Node(
-                package="agx_arm_moveit",
-                executable="agx_arm_control_gate",
-                name="piper_control_gate",
-                output="screen",
-                parameters=[
-                    {
-                        "status_topics": [
-                            "/piper/arm_controller/"
-                            "follow_joint_trajectory/_action/status"
-                        ],
-                        "gate_service_name": "/piper/control_enable",
-                    }
-                ],
-                condition=UnlessCondition(
-                    LaunchConfiguration("control_enabled")
-                ),
+                parameters=[{"prefix": ARM_PREFIX, "commands_enabled": False}],
             ),
         ]
     )
     return actions
+
+
+def _after_homing(event, context, ready_actions):
+    if event.returncode != 0:
+        return [LogInfo(msg="ERROR: Arm homing failed. MoveIt remains stopped; inspect /piper feedback and homing logs.")]
+    return [LogInfo(msg="Arm homing verified; starting MoveIt."), *ready_actions]
 
 
 def _launch_setup(context):
@@ -306,6 +297,9 @@ def _launch_setup(context):
                 {"robot_description": full_robot_description}
             ],
         ),
+    ]
+
+    ready_actions = [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 str(shared_moveit_share / "launch" / "move_group.launch.py")
@@ -323,10 +317,8 @@ def _launch_setup(context):
         ),
     ]
 
-    actions.extend(_arm_actions(context))
-
     if _as_bool(context, "use_rviz"):
-        actions.append(
+        ready_actions.append(
             Node(
                 package="rviz2",
                 executable="rviz2",
@@ -345,6 +337,46 @@ def _launch_setup(context):
                 remappings=[("joint_states", "/joint_states")],
             )
         )
+
+    use_hardware = _as_bool(context, "start_arm_hardware")
+    if use_hardware and not _as_bool(context, "control_enabled"):
+        # Start the trajectory-based gate only after homing, so it cannot
+        # close the driver gate or react to mock synchronization goals early.
+        ready_actions.insert(0, Node(
+            package="agx_arm_moveit",
+            executable="agx_arm_control_gate",
+            name="piper_control_gate",
+            output="screen",
+            parameters=[{
+                "status_topics": ["/piper/arm_controller/follow_joint_trajectory/_action/status"],
+                "gate_service_name": "/piper/control_enable",
+            }],
+        ))
+
+    if use_hardware:
+        homing = Node(
+            package="curtmini_piper_bringup",
+            executable="home_arm.py",
+            name="home_arm",
+            namespace=ARM_NAMESPACE,
+            output="screen",
+            parameters=[
+                LaunchConfiguration("homing_config"),
+                moveit_config.robot_description,
+                {"prefix": ARM_PREFIX,
+                 "has_gripper": model in GRIPPER_MODELS,
+                 "release_control": _as_bool(context, "control_enabled")},
+            ],
+        )
+        actions.append(RegisterEventHandler(OnProcessExit(
+            target_action=homing,
+            on_exit=partial(_after_homing, ready_actions=ready_actions),
+        )))
+        actions.extend(_arm_actions(context))
+        actions.append(homing)
+    else:
+        actions.extend(_arm_actions(context))
+        actions.extend(ready_actions)
 
     return actions
 
@@ -393,13 +425,18 @@ def generate_launch_description():
                 "control_enabled",
                 default_value="true",
                 choices=["true", "false"],
-                description="Whether the Piper driver accepts control commands.",
+                description="Keep driver control enabled after verified homing; false uses the trajectory gate afterward.",
+            ),
+            DeclareLaunchArgument(
+                "homing_config",
+                default_value=str(Path(get_package_share_directory("curtmini_piper_bringup")) / "config" / "homing.yaml"),
+                description="Hardware startup home pose, speed, feedback tolerances and timeouts.",
             ),
             DeclareLaunchArgument(
                 "fast_mode",
-                default_value="true",
+                default_value="false",
                 choices=["true", "false"],
-                description="Use streaming joint commands for Piper control.",
+                description="Use MIT/JS move_js commands; unsafe on Piper firmware before 1.8-5 (mode switches can drop the arm).",
             ),
             DeclareLaunchArgument(
                 "piper_joint_limits_file",
