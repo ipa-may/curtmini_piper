@@ -29,227 +29,119 @@ model lives in `curt_mini_description`, and base controllers remain in
 `curt_mini_bringup`. This package owns only the mount and TCP joints that
 connect the two models.
 
-## Workspace setup
+### 0. Dependencies
 
-The following instructions assume ROS 2 Jazzy and a workspace at `~/new_ws`.
+- ROS 2 Jazzy 
 
-Install the workspace tools and system dependencies:
+## 1. Workspace setup
 
-```bash
-source /opt/ros/jazzy/setup.bash
-
-sudo apt update
-sudo apt install -y \
-  python3-colcon-common-extensions \
-  python3-vcstool \
-  python3-rosdep \
-  python3-can \
-  python3-scipy \
-  can-utils \
-  ethtool
-```
-
-The Python dependency installation below requires
-[`uv`](https://docs.astral.sh/uv/) to be available on `PATH`.
-
-Initialize rosdep once per machine, if it has not already been initialized:
-
-```bash
-sudo rosdep init
-```
-
-An `already initialized` message can be ignored. Update the rosdep database:
-
-```bash
-rosdep update
-```
-
-For the Piper arm and MoveIt, import the arm dependencies:
+### 1.1 Create a ROS workspace
 ```sh
-vcs import --recursive src \
-  < src/curtmini_piper/docker/dependencies/arm.repos
+mkdir -p ros2_ws/src
+cd ros2_ws/src
 ```
 
-To run the mobile base too, import its separate dependencies. The
-`--skip-existing` option leaves the shared `curt_mini` checkout in place:
+### 1.2. Clone the repo in the source folder of the ROS workspace
+```sh
+git clone https://github.com/ipa-may/curtmini_piper.git
+```
+
+### 1.3 Import the dependencies
+
+Import the dependencies repos using vcs
+```sh
+cd ~/ros2_ws
+vcs import src/ < src/curtmini_piper/dependencies_without_hardware.repos
+```
+
+Your workspace should be:
+```text
+src/
+├── curt_mini/
+├── curtmini_piper/
+└── piper_driver/
+    ├── agx_arm_ros/
+    ├── agx_arm_urdf/
+```
+
+From the ROS workspace:
 
 ```sh
-vcs import --recursive --skip-existing src \
-  < src/curtmini_piper/docker/dependencies/base.repos
+rosdep init
+rosdep install --from-paths src -y --ignore-src
 ```
 
-The arm manifest provides the Piper driver, model, and Curt Mini description.
-The base manifest adds `candle_ros2` for the base hardware interface and
-`openzen_driver` for the IMU. Both manifests use the same `curt_mini` revision.
 
-Install the Python SDK used by the Piper hardware node:
+## 2. Building the packages
 
-Create a virtual environment
-```sh
-uv venv .venv
-source .venv/bin/activate
-```
+From the ROS workspace 
 
-Install pyAxArm python requirements
-```bash
-uv pip install --break-system-packages \
-  "git+https://github.com/agilexrobotics/pyAgxArm.git"
-```
 
 ```sh
-uv pip install numpy pyyaml
+colcon build --packages-up-to curtmini_piper_bringup
 ```
+<!-- moveit_config packages:
+- curtmini_piper_l_gripper_moveit_config
+- curtmini_piper_h_gripper_moveit_config
+- curtmini_piper_x_gripper_moveit_config -->
 
-Install the declared dependencies for the Piper arm and MoveIt:
 
-From the workspace:
-```bash
-rosdep install --from-paths \
-  src/piper_driver/agx_arm_ros/src \
-  src/piper_driver/agx_arm_urdf \
-  src/curt_mini/curt_mini_description \
-  src/curtmini_piper/curtmini_piper_description \
-  src/curtmini_piper/curtmini_piper_moveit_config \
-  src/curtmini_piper/curtmini_piper_bringup \
-  --ignore-src --rosdistro jazzy -ry
-```
-
-For the base as well, install dependencies from its packages and build
-`curt_mini_bringup` with `openzen_driver`. The base driver is independent of
-the Piper arm build.
-
-## Build
-
-From the workspace root:
-
-```bash
-source /opt/ros/jazzy/setup.bash
-colcon build --packages-up-to \
-  curtmini_piper_bringup
+Source the ROS workspace:
+```sh
 source install/setup.bash
 ```
 
-If you imported the base dependencies, build them separately:
+## 3. Launch scripts
 
-```bash
-colcon build --packages-up-to curt_mini_bringup openzen_driver
-source install/setup.bash
+The launch scripts take the `arm_model` as argument.
+
+
+### 3.1 Visualizing the robot:
+```sh
+ros2 launch curtmini_piper_description view_robot.launch.py arm_model:=piper_l
 ```
+arm_model:
+- piper_l
+- piper_h
+- piper_x
+- piper (without gripper)
 
-## Simulation
+
+**About the robot structure:**
+
+The arm mount, TCP offset, and lidar mount are defined in
+`curtmini_piper_description/config/geometry.yaml`. 
+
+The arm and lidar mounts are relative to `chassis`; the TCP offset is relative to `piper_link6`.
+
+Update the YAML and restart bringup and planning clients together so their
+robot descriptions use the same geometry.
+
+
+### 3.2 Hardware-free Moveit
+
+```sh
+ros2 launch curtmini_piper_bringup bringup_l.launch.py
+```
+For each arm type, use a different bringup launch:
+- for piper_l : bringup_l.launch.py
+- for piper_h : bringup_h.launch.py
+- for piper_x : bringup_x.launch.py
+
+Those bringups defaults to start_arm_hardware:=false and starts:
+- mock ros2_control
+- arm and gripper controllers
+- joint-state and robot-state publishers
+- move_group
+- RViz
+
+
+## 4. Using the real robot
+
+Instruction TBD
+
+## 5. Simulation
 
 Simulation lives in the separate [curtmini_piper_gz_sim repository](https://github.com/ipa-may/curtmini_piper_gz_sim).
 Clone that repository and follow its setup instructions to build and run simulation.
 
-
-## Real robot
-
-Activate the CAN bus. From the workspace:
-```sh
-bash src/piper_driver/agx_arm_ros/scripts/can_activate.sh
-```
-
-Start the Piper arm and MoveIt:
-```bash
-ros2 launch curtmini_piper_bringup bringup.launch.py
-```
-
-To start the mobile base as well, run this in a second terminal:
-
-```bash
-ros2 launch curt_mini_bringup robot_base.launch.py \
-  publish_robot_description:=False
-```
-
-The Piper launch publishes the complete robot model, so the base launch skips
-its own base-only model in this combination. For the base alone, use
-`ros2 launch curt_mini_bringup robot_base.launch.py` with its default model
-publisher. MoveIt uses prefixed names such as `piper_joint1`; a bridge
-translates these to the unprefixed names expected by `agx_arm_ctrl`.
-
-The AGX command interface defaults to `control_enabled=true` and accepts
-commands continuously. Set `control_enabled:=false` to start the trajectory-status
-gate, which enables commands only while a trajectory action is active.
-
-MoveIt uses the original Curt Mini visual mesh and a simplified box collision
-for the chassis. The upstream 30 MB chassis STL remains in the full
-robot-state-publisher description, but is not used as an FCL collision mesh.
-
-## Hardware-free MoveIt/RViz
-
-For a self-contained mock arm demo, run:
-
-```bash
-ros2 launch curtmini_piper_moveit_config demo.launch.py
-```
-
-The Piper bringup also supports mock arm hardware:
-
-```bash
-ros2 launch curtmini_piper_bringup bringup.launch.py \
-  start_arm_hardware:=false
-```
-
-Both the real bringup and Gazebo start `move_group` through
-`curtmini_piper_moveit_config/launch/move_group.launch.py`. They select their
-own MoveIt controller mapping. Start only one backend at a time.
-
-## Standalone MoveIt RViz
-
-Start simulation or hardware bringup with `use_rviz:=false`, then run RViz as
-a separate process:
-
-```bash
-# Simulation
-ros2 launch curtmini_piper_moveit_config moveit_rviz.launch.py \
-  use_sim_time:=true
-
-# Real robot
-ros2 launch curtmini_piper_moveit_config moveit_rviz.launch.py \
-  use_sim_time:=false
-```
-
-This launch starts only RViz and expects the active bringup to provide
-`move_group`, `/joint_states`, transforms, and the planning scene. Mount and
-TCP offset arguments must match those passed to the bringup launch.
-
-## MoveItPy
-
-Start simulation or real robot bringup first. The example package now lives in
-[`curtmini_piper_tools`](../curtmini_piper_tools/curtmini_piper_moveitpy_example/README.md).
-Its ROS package and `moveit_goal` command keep the same names.
-
-## Mount calibration
-
-The arm mount, TCP offset, and lidar mount are defined in
-`curtmini_piper_description/config/geometry.yaml`. The arm and lidar mounts
-are relative to `chassis`; the TCP offset is relative to `piper_link6`.
-Update the YAML and restart bringup and planning clients together so their
-robot descriptions use the same geometry.
-
-## Dependency troubleshooting
-
-The setuptools deprecation messages printed before the build starts are
-warnings. The fatal error in the example above is CMake being unable to find
-`candle_ros2`.
-
-If CMake cannot find `candle_ros2`, confirm that the source import succeeded:
-
-```bash
-cd ~/piper_tests2
-colcon list | grep -E '^(candle_ros2|openzen_driver)[[:space:]]'
-```
-
-Both packages should be listed. If either is missing, repeat the corresponding
-`vcs import` command from the workspace setup section.
-
-Before starting real Piper hardware, verify that its Python SDK is importable:
-
-```bash
-python3 -c "import pyAgxArm; print(pyAgxArm.__file__)"
-```
-
-The current MoveIt installation also reports a missing
-`libgeometric_shapes.so.2.3.4` when loading its optional point-cloud octomap
-updater. Arm planning and trajectory control still start successfully, but
-depth-camera octomap updates require that system library mismatch to be fixed.

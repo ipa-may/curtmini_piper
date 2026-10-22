@@ -37,7 +37,7 @@ def generate_launch_description():
                 "use_hokuyo", default_value="false", choices=["true", "false"]
             ),
             DeclareLaunchArgument(
-                "arm_model", default_value="piper", choices=["piper", "piper_h", "piper_l", "piper_x"]
+                "arm_model", default_value="piper_x", choices=["piper", "piper_h", "piper_l", "piper_x"]
             ),
             Node(
                 package="robot_state_publisher",
