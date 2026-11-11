@@ -57,19 +57,22 @@ controller_server:
       plugin: dwb_core::DWBLocalPlanner
       forward_prune_distance: 5.0 # meters (controls how far ahead DWB keeps the global path for evaluating its candidate movements)
       min_vel_x: 0.0
-      max_vel_x: 2.25 # 0.25
+      # Keep within base_controller limits (linear 1.5 m/s, 2.5 m/s^2). Gentle
+      # rotation limits reduce skid-steer slip; odometry was calibrated at 0.5 rad/s
+      # (see curtmini_piper_gz_sim/doc/odometry_calibration.md).
+      max_vel_x: 1.0
       min_vel_y: 0.0
       max_vel_y: 0.0
-      max_vel_theta: 2.5
+      max_vel_theta: 1.0
       min_speed_xy: 0.05
-      max_speed_xy: 2.25
+      max_speed_xy: 1.0
       min_speed_theta: 0.1
-      acc_lim_x: 4.5
+      acc_lim_x: 2.5
       acc_lim_y: 0.0
-      acc_lim_theta: 10.0
-      decel_lim_x: -4.5
+      acc_lim_theta: 2.0
+      decel_lim_x: -2.5
       decel_lim_y: 0.0
-      decel_lim_theta: -5.0
+      decel_lim_theta: -2.0
       vx_samples: 15
       vy_samples: 1
       vtheta_samples: 20
